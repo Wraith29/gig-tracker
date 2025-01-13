@@ -18,8 +18,6 @@ var (
 	tableStyle = table.DefaultStyles()
 )
 
-var style = lg.NewStyle().BorderStyle(lg.NormalBorder()).BorderForeground(lg.Color("#00ff00"))
-
 type App struct {
 	artistTable *table.Model
 	venueTable  *table.Model
