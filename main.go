@@ -1,7 +1,7 @@
 package main
 
 import (
-	"gig-tracker/int/data"
+	"gig-tracker/internal/data"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
