@@ -90,10 +90,4 @@ func (a App) View() string {
 	output.WriteString("\n\n")
 
 	return output.String()
-
-	// return fmt.Sprintf("Artists:\n%s\n%s\n\nVenues:\n%s\n%s\n\nGigs:\n%s\n%s\n\nPress q to Quit",
-	// 	a.artistTable.View(), a.artistTable.HelpView(),
-	// 	a.venueTable.View(), a.venueTable.HelpView(),
-	// 	a.gigTable.View(), a.gigTable.HelpView(),
-	// )
 }
