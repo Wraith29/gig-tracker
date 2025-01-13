@@ -45,10 +45,10 @@ func (g Gig) ToRow() table.Row {
 	}
 }
 
-func GetGigTable(db *gorm.DB) (*table.Model, error) {
+func GetGigTable(db *gorm.DB) (table.Model, error) {
 	gigs := make([]Gig, 0)
 	if result := db.Find(&gigs); result.Error != nil {
-		return nil, result.Error
+		return table.Model{}, result.Error
 	}
 
 	gigRows := make([]table.Row, len(gigs))
@@ -68,5 +68,5 @@ func GetGigTable(db *gorm.DB) (*table.Model, error) {
 		table.WithHeight(10),
 	)
 
-	return &gigTable, nil
+	return gigTable, nil
 }

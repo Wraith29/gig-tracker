@@ -22,10 +22,10 @@ func (v Venue) ToRow() table.Row {
 	}
 }
 
-func GetVenueTable(db *gorm.DB) (*table.Model, error) {
+func GetVenueTable(db *gorm.DB) (table.Model, error) {
 	venues := make([]Venue, 0)
 	if result := db.Find(&venues); result.Error != nil {
-		return nil, result.Error
+		return table.Model{}, result.Error
 	}
 
 	venueRows := make([]table.Row, len(venues))
@@ -44,5 +44,5 @@ func GetVenueTable(db *gorm.DB) (*table.Model, error) {
 		table.WithHeight(10),
 	)
 
-	return &venueTable, nil
+	return venueTable, nil
 }

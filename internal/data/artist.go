@@ -22,10 +22,10 @@ func (a Artist) ToRow() table.Row {
 	}
 }
 
-func GetArtistTable(db *gorm.DB) (*table.Model, error) {
+func GetArtistTable(db *gorm.DB) (table.Model, error) {
 	artists := make([]Artist, 0)
 	if result := db.Find(&artists); result.Error != nil {
-		return nil, result.Error
+		return table.Model{}, result.Error
 	}
 
 	artistRows := make([]table.Row, len(artists))
@@ -44,5 +44,5 @@ func GetArtistTable(db *gorm.DB) (*table.Model, error) {
 		table.WithHeight(10),
 	)
 
-	return &artistTable, nil
+	return artistTable, nil
 }
