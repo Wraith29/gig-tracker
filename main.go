@@ -1,6 +1,7 @@
 package main
 
 import (
+	"gig-tracker/cmd"
 	"gig-tracker/internal/data"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -18,7 +19,7 @@ func main() {
 		panic(err)
 	}
 
-	model, err := data.NewApp(db)
+	model, err := cmd.NewApp(db)
 	if err != nil {
 		panic(err)
 	}
