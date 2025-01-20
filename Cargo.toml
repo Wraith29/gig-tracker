@@ -3,6 +3,9 @@ name = "gig-tracker"
 version = "0.1.0"
 edition = "2021"
 
+[toolchain]
+channel = "nightly"
+
 [dependencies]
 async-std = { version = "1.13.0", features = ["attributes"] }
 crossterm = "0.28.1"

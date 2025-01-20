@@ -1,7 +1,7 @@
 use ratatui::widgets::Row;
 use sqlx::SqlitePool;
 
-use crate::date::Date;
+use crate::{dataset::DataSet, date::Date};
 
 #[derive(Clone)]
 enum Act {
@@ -41,21 +41,25 @@ pub struct Gig {
     act: Act,
 }
 
-impl Gig {}
-
-impl<'a> Into<Row<'a>> for Gig {
-    fn into(self) -> Row<'a> {
+impl<'a> From<Gig> for Row<'a> {
+    fn from(value: Gig) -> Self {
         Row::new(vec![
-            self.artist_id.to_string(),
-            self.venue_id.to_string(),
-            self.date.to_string(),
-            self.act.to_string(),
+            value.artist_id.to_string(),
+            value.venue_id.to_string(),
+            value.date.to_string(),
+            value.act.to_string(),
         ])
     }
 }
 
-pub async fn get_all_gigs(pool: &SqlitePool) -> Result<Vec<Gig>, sqlx::Error> {
-    Ok(sqlx::query_as!(Gig, "SELECT * FROM gig")
-        .fetch_all(pool)
-        .await?)
+impl DataSet for Gig {
+    async fn create(value: Self, pool: &SqlitePool) -> Result<(), crate::error::GTError> {
+        todo!()
+    }
+
+    async fn load_all(pool: &SqlitePool) -> Result<Vec<Self>, crate::error::GTError> {
+        Ok(sqlx::query_as!(Gig, "SELECT * FROM gig")
+            .fetch_all(pool)
+            .await?)
+    }
 }

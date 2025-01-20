@@ -1,6 +1,8 @@
 use ratatui::widgets::Row;
 use sqlx::SqlitePool;
 
+use crate::dataset::DataSet;
+
 pub const VENUE_HEADERS: [&str; 3] = ["Venue Id", "Name", "City"];
 
 #[derive(Clone)]
@@ -10,14 +12,20 @@ pub struct Venue {
     city: String,
 }
 
-impl<'a> Into<Row<'a>> for Venue {
-    fn into(self) -> Row<'a> {
-        Row::new(vec![self.venue_id.to_string(), self.name, self.city])
+impl<'a> From<Venue> for Row<'a> {
+    fn from(value: Venue) -> Self {
+        Row::new(vec![value.venue_id.to_string(), value.name, value.city])
     }
 }
 
-pub async fn get_all_venues(pool: &SqlitePool) -> Result<Vec<Venue>, sqlx::Error> {
-    Ok(sqlx::query_as!(Venue, "SELECT * FROM venue")
-        .fetch_all(pool)
-        .await?)
+impl DataSet for Venue {
+    async fn create(value: Self, pool: &SqlitePool) -> Result<(), crate::error::GTError> {
+        todo!()
+    }
+
+    async fn load_all(pool: &SqlitePool) -> Result<Vec<Self>, crate::error::GTError> {
+        Ok(sqlx::query_as!(Venue, "SELECT * FROM venue")
+            .fetch_all(pool)
+            .await?)
+    }
 }

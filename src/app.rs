@@ -1,4 +1,4 @@
-use std::{io::Stdout, time::Duration};
+use std::{collections::HashMap, io::Stdout, time::Duration};
 
 use crossterm::event::{self, Event, KeyCode};
 use ratatui::{
@@ -9,13 +9,14 @@ use ratatui::{
 use sqlx::SqlitePool;
 
 use crate::{
-    artist::{get_all_artists, Artist, ARTIST_HEADERS},
+    artist::{Artist, ARTIST_HEADERS},
     data_table::DataTable,
     error::GTError,
-    gig::{get_all_gigs, Gig, GIG_HEADERS},
-    venue::{get_all_venues, Venue, VENUE_HEADERS},
+    gig::{Gig, GIG_HEADERS},
+    venue::{Venue, VENUE_HEADERS},
 };
 
+#[derive(Hash, PartialEq, Eq)]
 enum FocusedApp {
     Artists,
     Venues,
@@ -45,10 +46,8 @@ pub struct App<'a> {
     pool: SqlitePool,
     term: Terminal<CrosstermBackend<Stdout>>,
 
+    apps: HashMap<FocusedApp, DataTable<'a>>,
     focused_app: FocusedApp,
-    artists: DataTable<'a, Artist>,
-    venues: DataTable<'a, Venue>,
-    gigs: DataTable<'a, Gig>,
 }
 
 impl App<'_> {
@@ -58,39 +57,41 @@ impl App<'_> {
 
         term.clear()?;
 
-        let artist_data = get_all_artists(&pool).await?;
-        let mut artists = DataTable::new(
+        let mut artists = DataTable::new::<Artist>(
             "Artists",
-            artist_data,
+            &pool,
             [Constraint::Length(20); 3].to_vec(),
             ARTIST_HEADERS.to_vec(),
-        );
+        )
+        .await?;
         artists.focus();
 
-        let venue_data = get_all_venues(&pool).await?;
-        let venues = DataTable::new(
+        let venues = DataTable::new::<Venue>(
             "Venues",
-            venue_data,
+            &pool,
             [Constraint::Length(20); 3].to_vec(),
             VENUE_HEADERS.to_vec(),
-        );
+        )
+        .await?;
 
-        let gig_data = get_all_gigs(&pool).await?;
-        let gigs = DataTable::new(
+        let gigs = DataTable::new::<Gig>(
             "Gigs",
-            gig_data,
+            &pool,
             [Constraint::Length(15); 4].to_vec(),
             GIG_HEADERS.to_vec(),
-        );
+        )
+        .await?;
 
         Ok(App {
             running: true,
+            apps: HashMap::from([
+                (FocusedApp::Artists, artists),
+                (FocusedApp::Venues, venues),
+                (FocusedApp::Gigs, gigs),
+            ]),
             focused_app: FocusedApp::Artists,
             pool,
             term,
-            artists,
-            venues,
-            gigs,
         })
     }
 
@@ -124,36 +125,36 @@ impl App<'_> {
             _ => {}
         }
 
-        match self.focused_app {
-            FocusedApp::Artists => self.artists.handle_event(&event),
-            FocusedApp::Venues => self.venues.handle_event(&event),
-            FocusedApp::Gigs => self.gigs.handle_event(&event),
-        }
+        self.apps
+            .get_mut(&self.focused_app)
+            .unwrap()
+            .handle_event(&event);
 
         Ok(false)
     }
 
     fn focus(&mut self, new_focus: FocusedApp) {
-        self.artists.unfocus();
-        self.venues.unfocus();
-        self.gigs.unfocus();
-
-        match new_focus {
-            FocusedApp::Artists => self.artists.focus(),
-            FocusedApp::Venues => self.venues.focus(),
-            FocusedApp::Gigs => self.gigs.focus(),
-        }
-
+        self.apps.get_mut(&self.focused_app).unwrap().unfocus();
         self.focused_app = new_focus;
+        self.apps.get_mut(&self.focused_app).unwrap().focus();
     }
 
     fn draw(&mut self) -> Result<(), GTError> {
         self.term.draw(|f| {
             let [top, middle, bottom] = Layout::vertical([Constraint::Fill(1); 3]).areas(f.area());
 
-            self.artists.render(f, top);
-            self.venues.render(f, middle);
-            self.gigs.render(f, bottom);
+            self.apps
+                .get_mut(&FocusedApp::Artists)
+                .unwrap()
+                .render(f, top);
+            self.apps
+                .get_mut(&FocusedApp::Venues)
+                .unwrap()
+                .render(f, middle);
+            self.apps
+                .get_mut(&FocusedApp::Gigs)
+                .unwrap()
+                .render(f, bottom);
         })?;
 
         Ok(())

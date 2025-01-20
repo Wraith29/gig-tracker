@@ -1,42 +1,43 @@
-use std::borrow::BorrowMut;
-
 use crossterm::event::{Event, KeyCode};
 use ratatui::{
     layout::{Constraint, Layout, Rect},
-    style::{Color, Style, Styled, Stylize},
+    style::{Style, Stylize},
     text::Text,
-    widgets::{Block, BorderType, Borders, Row, Table, TableState, Widget},
+    widgets::{Block, BorderType, Row, Table, TableState},
     Frame,
 };
+use sqlx::SqlitePool;
 
-pub struct DataTable<'a, T: Into<Row<'a>> + Clone> {
+use crate::{dataset::DataSet, error::GTError};
+
+pub struct DataTable<'a> {
     title: String,
-    data: Vec<T>,
     pub focused: bool,
     style: Style,
     table: Table<'a>,
     state: TableState,
 }
 
-impl<'a, T: Into<Row<'a>> + Clone> DataTable<'a, T> {
-    pub fn new(
+impl<'a> DataTable<'a> {
+    pub async fn new<T: Into<Row<'a>> + DataSet>(
         title: impl Into<String>,
-        data: Vec<T>,
+        pool: &SqlitePool,
         constraints: Vec<Constraint>,
         headers: Vec<&'static str>,
-    ) -> Self {
-        let table = Table::new(data.clone(), constraints)
+    ) -> Result<Self, GTError> {
+        let data = T::load_all(pool).await?;
+
+        let table = Table::new(data, constraints)
             .header(Row::new(headers).underlined())
             .row_highlight_style(Style::new().on_gray().dark_gray());
 
-        Self {
-            data,
+        Ok(Self {
             table,
             focused: false,
             title: title.into(),
             style: Style::new().red(),
             state: TableState::default(),
-        }
+        })
     }
 
     pub fn handle_event(&mut self, event: &Event) {
