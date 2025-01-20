@@ -1,3 +1,8 @@
 *.db
 logs
 gig-tracker
+
+
+# Added by cargo
+
+/target
