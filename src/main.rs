@@ -1,9 +1,11 @@
+#[allow(unused_variables)]
 mod app;
 mod artist;
-mod data_table;
 mod dataset;
+mod datatable;
 mod date;
 mod error;
+mod form;
 mod gig;
 mod venue;
 

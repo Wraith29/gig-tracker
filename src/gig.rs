@@ -4,7 +4,7 @@ use sqlx::SqlitePool;
 use crate::{dataset::DataSet, date::Date};
 
 #[derive(Clone)]
-enum Act {
+pub enum Act {
     MainAct = 0,
     SupportAct = 1,
     SharedHeadliner = 2,

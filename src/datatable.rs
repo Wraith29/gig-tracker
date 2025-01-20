@@ -10,9 +10,11 @@ use sqlx::SqlitePool;
 
 use crate::{dataset::DataSet, error::GTError};
 
+const HELP_TEXT: &str = "j - down, k - up, + - create, <- back";
+
 pub struct DataTable<'a> {
     title: String,
-    pub focused: bool,
+    focused: bool,
     style: Style,
     table: Table<'a>,
     state: TableState,
@@ -68,15 +70,15 @@ impl<'a> DataTable<'a> {
             .border_type(BorderType::Rounded)
             .border_style(self.style);
 
-        let [table_area, help_line] =
+        let [content_area, help_area] =
             Layout::vertical(vec![Constraint::Fill(1), Constraint::Length(1)])
                 .areas(block.inner(area));
 
         frame.render_widget(block, area);
-        frame.render_stateful_widget(&self.table, table_area, &mut self.state);
+        frame.render_stateful_widget(&self.table, content_area, &mut self.state);
         frame.render_widget(
-            Text::from("k - up, j - down, + - new").style(Style::new().on_dark_gray().white()),
-            help_line,
+            Text::from(HELP_TEXT).style(Style::new().on_dark_gray().white()),
+            help_area,
         );
     }
 }

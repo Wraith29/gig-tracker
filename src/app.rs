@@ -10,8 +10,9 @@ use sqlx::SqlitePool;
 
 use crate::{
     artist::{Artist, ARTIST_HEADERS},
-    data_table::DataTable,
+    datatable::DataTable,
     error::GTError,
+    form::Form,
     gig::{Gig, GIG_HEADERS},
     venue::{Venue, VENUE_HEADERS},
 };
@@ -43,11 +44,10 @@ impl FocusedApp {
 
 pub struct App<'a> {
     running: bool,
-    pool: SqlitePool,
     term: Terminal<CrosstermBackend<Stdout>>,
-
     apps: HashMap<FocusedApp, DataTable<'a>>,
     focused_app: FocusedApp,
+    form: Form<'a>,
 }
 
 impl App<'_> {
@@ -90,8 +90,8 @@ impl App<'_> {
                 (FocusedApp::Gigs, gigs),
             ]),
             focused_app: FocusedApp::Artists,
-            pool,
             term,
+            form: Form::new(),
         })
     }
 
@@ -141,20 +141,28 @@ impl App<'_> {
 
     fn draw(&mut self) -> Result<(), GTError> {
         self.term.draw(|f| {
-            let [top, middle, bottom] = Layout::vertical([Constraint::Fill(1); 3]).areas(f.area());
+            let [left, middle, right] =
+                Layout::horizontal([Constraint::Fill(1); 3]).areas(f.area());
+
+            let [left_top, left_mid, left_btm] =
+                Layout::vertical([Constraint::Fill(1); 3]).areas(left);
+
+            let [mid_top, mid_btm] = Layout::vertical([Constraint::Fill(1); 2]).areas(middle);
 
             self.apps
                 .get_mut(&FocusedApp::Artists)
                 .unwrap()
-                .render(f, top);
+                .render(f, left_top);
             self.apps
                 .get_mut(&FocusedApp::Venues)
                 .unwrap()
-                .render(f, middle);
+                .render(f, left_mid);
             self.apps
                 .get_mut(&FocusedApp::Gigs)
                 .unwrap()
-                .render(f, bottom);
+                .render(f, left_btm);
+
+            self.form.render(f, mid_top);
         })?;
 
         Ok(())
