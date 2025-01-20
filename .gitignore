@@ -1,6 +1,7 @@
 *.db
 logs
 gig-tracker
+.env
 
 
 # Added by cargo
