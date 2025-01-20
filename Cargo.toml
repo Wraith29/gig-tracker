@@ -1,0 +1,11 @@
+[package]
+name = "gig-tracker"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+async-std = { version = "1.13.0", features = ["attributes"] }
+crossterm = "0.28.1"
+dotenv = "0.15.0"
+ratatui = "0.29.0"
+sqlx = { version = "0.8.3", features = ["runtime-async-std", "sqlite"] }
