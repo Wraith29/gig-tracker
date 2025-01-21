@@ -1,6 +1,7 @@
 #[allow(unused_variables)]
 mod app;
 mod artist;
+mod column;
 mod dataset;
 mod datatable;
 mod date;

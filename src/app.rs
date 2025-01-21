@@ -10,6 +10,7 @@ use sqlx::SqlitePool;
 
 use crate::{
     artist::{Artist, ARTIST_HEADERS},
+    column::{Column, FocusedApp},
     datatable::DataTable,
     error::GTError,
     form::Form,
@@ -17,36 +18,11 @@ use crate::{
     venue::{Venue, VENUE_HEADERS},
 };
 
-#[derive(Hash, PartialEq, Eq)]
-enum FocusedApp {
-    Artists,
-    Venues,
-    Gigs,
-}
-
-impl FocusedApp {
-    fn down(&self) -> Self {
-        match self {
-            FocusedApp::Artists => FocusedApp::Venues,
-            FocusedApp::Venues => FocusedApp::Gigs,
-            FocusedApp::Gigs => FocusedApp::Artists,
-        }
-    }
-
-    fn up(&self) -> Self {
-        match self {
-            FocusedApp::Artists => FocusedApp::Gigs,
-            FocusedApp::Venues => FocusedApp::Artists,
-            FocusedApp::Gigs => FocusedApp::Venues,
-        }
-    }
-}
-
 pub struct App<'a> {
     running: bool,
     term: Terminal<CrosstermBackend<Stdout>>,
     apps: HashMap<FocusedApp, DataTable<'a>>,
-    focused_app: FocusedApp,
+    column: Column,
     form: Form<'a>,
 }
 
@@ -84,13 +60,13 @@ impl App<'_> {
 
         Ok(App {
             running: true,
+            term,
             apps: HashMap::from([
                 (FocusedApp::Artists, artists),
                 (FocusedApp::Venues, venues),
                 (FocusedApp::Gigs, gigs),
             ]),
-            focused_app: FocusedApp::Artists,
-            term,
+            column: Column::Left(FocusedApp::Artists),
             form: Form::new(),
         })
     }
@@ -118,25 +94,58 @@ impl App<'_> {
         match event {
             Event::Key(key) => match key.code {
                 KeyCode::Char('q') => return Ok(true),
-                KeyCode::Char('J') => self.focus(self.focused_app.down()),
-                KeyCode::Char('K') => self.focus(self.focused_app.up()),
+                KeyCode::Char('J') => {
+                    if let Column::Left(focused_app) = &self.column {
+                        self.apps.get_mut(focused_app).unwrap().unfocus();
+                    }
+
+                    self.column = self.column.down();
+
+                    if let Column::Left(focused_app) = &self.column {
+                        self.apps.get_mut(focused_app).unwrap().focus();
+                    }
+                }
+                KeyCode::Char('K') => {
+                    if let Column::Left(focused_app) = &self.column {
+                        self.apps.get_mut(focused_app).unwrap().unfocus();
+                    }
+
+                    self.column = self.column.up();
+
+                    if let Column::Left(focused_app) = &self.column {
+                        self.apps.get_mut(focused_app).unwrap().focus();
+                    }
+                }
+                KeyCode::Char('H') => {
+                    self.column = self.column.left();
+
+                    if let Column::Left(focused_app) = &self.column {
+                        self.apps.get_mut(focused_app).unwrap().focus();
+                    }
+                }
+                KeyCode::Char('L') => {
+                    self.column = self.column.right();
+
+                    if !matches!(self.column, Column::Left(_)) {
+                        self.apps.iter_mut().for_each(|app| app.1.unfocus());
+                    }
+                }
                 _ => {}
             },
             _ => {}
         }
 
-        self.apps
-            .get_mut(&self.focused_app)
-            .unwrap()
-            .handle_event(&event);
+        match &self.column {
+            Column::Left(focused_app) => {
+                self.apps
+                    .get_mut(&focused_app)
+                    .unwrap()
+                    .handle_event(&event);
+            }
+            _ => {}
+        }
 
         Ok(false)
-    }
-
-    fn focus(&mut self, new_focus: FocusedApp) {
-        self.apps.get_mut(&self.focused_app).unwrap().unfocus();
-        self.focused_app = new_focus;
-        self.apps.get_mut(&self.focused_app).unwrap().focus();
     }
 
     fn draw(&mut self) -> Result<(), GTError> {
