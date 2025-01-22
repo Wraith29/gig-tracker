@@ -17,7 +17,7 @@ impl DataSet for City {
     }
 }
 
-impl<'a> From<City> for Row<'a> {
+impl From<City> for Row<'_> {
     fn from(value: City) -> Self {
         Row::new(vec![value.city_id.to_string(), value.name])
     }

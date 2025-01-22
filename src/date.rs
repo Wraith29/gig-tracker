@@ -7,10 +7,10 @@ pub struct Date {
 
 impl ToString for Date {
     fn to_string(&self) -> String {
-        String::from(format!(
+        format!(
             "{:04}/{:02}/{:02}",
             self.year, self.month, self.date
-        ))
+        )
     }
 }
 

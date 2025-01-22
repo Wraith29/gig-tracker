@@ -47,7 +47,7 @@ pub struct DataColumn<'a> {
     focused_app: TableName,
 }
 
-impl<'a> DataColumn<'a> {
+impl DataColumn<'_> {
     pub async fn new(pool: &Pool<Sqlite>) -> Result<Self, Error> {
         let artist_table = DataTable::new::<Artist>(
             "Artist",
@@ -146,22 +146,19 @@ impl<'a> DataColumn<'a> {
     }
 
     pub fn handle_event(&mut self, event: Event) {
-        match event {
-            Event::Key(key) => match key.code {
-                KeyCode::Char('K') => {
-                    self.apps.get_mut(&self.focused_app).unwrap().unfocus();
-                    self.focused_app = self.focused_app.prev();
-                    self.apps.get_mut(&self.focused_app).unwrap().focus();
-                }
-                KeyCode::Char('J') => {
-                    self.apps.get_mut(&self.focused_app).unwrap().unfocus();
-                    self.focused_app = self.focused_app.next();
-                    self.apps.get_mut(&self.focused_app).unwrap().focus();
-                }
-                _ => {}
-            },
+        if let Event::Key(key) = event { match key.code {
+            KeyCode::Char('K') => {
+                self.apps.get_mut(&self.focused_app).unwrap().unfocus();
+                self.focused_app = self.focused_app.prev();
+                self.apps.get_mut(&self.focused_app).unwrap().focus();
+            }
+            KeyCode::Char('J') => {
+                self.apps.get_mut(&self.focused_app).unwrap().unfocus();
+                self.focused_app = self.focused_app.next();
+                self.apps.get_mut(&self.focused_app).unwrap().focus();
+            }
             _ => {}
-        }
+        } }
 
         self.apps
             .get_mut(&self.focused_app)

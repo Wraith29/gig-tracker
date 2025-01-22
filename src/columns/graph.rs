@@ -9,7 +9,7 @@ use ratatui::{
 };
 use std::collections::HashMap;
 
-const MONTH_LABELS: [&'static str; 12] = [
+const MONTH_LABELS: [&str; 12] = [
     "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ];
 
@@ -51,7 +51,7 @@ impl GraphColumn {
 
         self.gigs.iter().for_each(|gig| {
             if let Some(month) = gig_data_map.get_mut(&gig.date.month) {
-                *month = *month + 1;
+                *month += 1;
             } else {
                 gig_data_map.insert(gig.date.month, 1);
             }

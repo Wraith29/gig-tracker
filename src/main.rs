@@ -91,10 +91,7 @@ impl<'a> App<'a> {
             }
         }
 
-        match self.focused_column {
-            ColumnName::Data => self.data_column.handle_event(event),
-            _ => {}
-        }
+        if let ColumnName::Data = self.focused_column { self.data_column.handle_event(event) }
 
         Ok(false)
     }

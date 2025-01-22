@@ -63,13 +63,10 @@ impl<'d> DataTable<'d> {
     }
 
     pub fn handle_event(&mut self, event: Event) {
-        match event {
-            Event::Key(key) => match key.code {
-                KeyCode::Char('k') => self.state.select_previous(),
-                KeyCode::Char('j') => self.state.select_next(),
-                _ => {}
-            },
+        if let Event::Key(key) = event { match key.code {
+            KeyCode::Char('k') => self.state.select_previous(),
+            KeyCode::Char('j') => self.state.select_next(),
             _ => {}
-        }
+        } }
     }
 }
