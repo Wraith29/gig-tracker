@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 #[derive(Clone)]
 pub struct Date {
     pub date: u32,
@@ -5,12 +7,9 @@ pub struct Date {
     pub year: u32,
 }
 
-impl ToString for Date {
-    fn to_string(&self) -> String {
-        format!(
-            "{:04}/{:02}/{:02}",
-            self.year, self.month, self.date
-        )
+impl Display for Date {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:04}/{:02}/{:02}", self.year, self.month, self.date)
     }
 }
 

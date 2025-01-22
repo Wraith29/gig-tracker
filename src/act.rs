@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 #[derive(Clone)]
 pub enum Act {
     Main = 1,
@@ -16,12 +18,12 @@ impl From<i64> for Act {
     }
 }
 
-impl ToString for Act {
-    fn to_string(&self) -> String {
+impl Display for Act {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Act::Main => String::from("Main Act"),
-            Act::Support => String::from("Support Act"),
-            Act::Shared => String::from("Shared Headliner"),
+            Act::Main => write!(f, "Main Act"),
+            Act::Support => write!(f, "Support Act"),
+            Act::Shared => write!(f, "Shared Headliner"),
         }
     }
 }
