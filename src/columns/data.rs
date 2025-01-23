@@ -146,19 +146,21 @@ impl DataColumn<'_> {
     }
 
     pub fn handle_event(&mut self, event: Event) {
-        if let Event::Key(key) = event { match key.code {
-            KeyCode::Char('K') => {
-                self.apps.get_mut(&self.focused_app).unwrap().unfocus();
-                self.focused_app = self.focused_app.prev();
-                self.apps.get_mut(&self.focused_app).unwrap().focus();
+        if let Event::Key(key) = event {
+            match key.code {
+                KeyCode::Char('K') => {
+                    self.apps.get_mut(&self.focused_app).unwrap().unfocus();
+                    self.focused_app = self.focused_app.prev();
+                    self.apps.get_mut(&self.focused_app).unwrap().focus();
+                }
+                KeyCode::Char('J') => {
+                    self.apps.get_mut(&self.focused_app).unwrap().unfocus();
+                    self.focused_app = self.focused_app.next();
+                    self.apps.get_mut(&self.focused_app).unwrap().focus();
+                }
+                _ => {}
             }
-            KeyCode::Char('J') => {
-                self.apps.get_mut(&self.focused_app).unwrap().unfocus();
-                self.focused_app = self.focused_app.next();
-                self.apps.get_mut(&self.focused_app).unwrap().focus();
-            }
-            _ => {}
-        } }
+        }
 
         self.apps
             .get_mut(&self.focused_app)

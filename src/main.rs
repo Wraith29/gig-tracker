@@ -6,6 +6,8 @@ mod dataset;
 mod datatable;
 mod date;
 mod error;
+mod form;
+mod forms;
 mod gig;
 mod venue;
 
@@ -14,6 +16,7 @@ use crossterm::event::{self, Event, KeyCode};
 use dataset::DataSet;
 use dotenv::dotenv;
 use error::Error;
+use form::Form;
 use gig::Gig;
 use ratatui::{
     layout::{Constraint, Layout},
@@ -28,6 +31,8 @@ struct App<'a> {
     focused_column: ColumnName,
     data_column: DataColumn<'a>,
     graph_column: GraphColumn,
+    render_form: bool,
+    form: Form<'a>,
 }
 
 impl<'a> App<'a> {
@@ -48,6 +53,8 @@ impl<'a> App<'a> {
             data_column,
             graph_column,
             focused_column: ColumnName::Data,
+            render_form: true,
+            form: Form::new(),
         })
     }
 
@@ -91,7 +98,9 @@ impl<'a> App<'a> {
             }
         }
 
-        if let ColumnName::Data = self.focused_column { self.data_column.handle_event(event) }
+        if let ColumnName::Data = self.focused_column {
+            self.data_column.handle_event(event)
+        }
 
         Ok(false)
     }
@@ -102,6 +111,10 @@ impl<'a> App<'a> {
 
             self.data_column.render(frame, left);
             self.graph_column.render(frame, right);
+
+            if self.render_form {
+                self.form.render(frame, frame.area());
+            }
         })?;
 
         Ok(())
