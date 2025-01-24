@@ -1,3 +1,5 @@
+use artist::ArtistForm;
+use crossterm::event::{Event, KeyCode};
 use ratatui::{
     layout::{Constraint, Layout, Rect},
     style::Stylize,
@@ -10,15 +12,83 @@ mod textinput;
 
 const FORM_TABS: [&str; 4] = ["Artist", "Venue", "Gig", "City"];
 
+enum FormTabs {
+    Artist = 0,
+    Venue,
+    Gig,
+    City,
+}
+
+impl FormTabs {
+    fn next(&self) -> Self {
+        match self {
+            FormTabs::Artist => FormTabs::Venue,
+            FormTabs::Venue => FormTabs::Gig,
+            FormTabs::Gig => FormTabs::City,
+            FormTabs::City => FormTabs::City,
+        }
+    }
+
+    fn prev(&self) -> Self {
+        match self {
+            FormTabs::Artist => FormTabs::Artist,
+            FormTabs::Venue => FormTabs::Artist,
+            FormTabs::Gig => FormTabs::Venue,
+            FormTabs::City => FormTabs::Gig,
+        }
+    }
+}
+
+impl From<&FormTabs> for Option<usize> {
+    fn from(value: &FormTabs) -> Self {
+        Some(match value {
+            FormTabs::Artist => 0,
+            FormTabs::Venue => 1,
+            FormTabs::Gig => 2,
+            FormTabs::City => 3,
+        })
+    }
+}
+
 pub struct Form<'a> {
+    current_tab: FormTabs,
     tabs: Tabs<'a>,
+
+    artist_form: ArtistForm<'a>,
 }
 
 impl Form<'_> {
     pub fn new() -> Self {
         let tabs = Tabs::new(FORM_TABS);
 
-        Self { tabs }
+        Self {
+            tabs,
+            current_tab: FormTabs::Artist,
+            artist_form: ArtistForm::new(),
+        }
+    }
+
+    pub fn handle_event(&mut self, event: Event) {
+        if let Event::Key(key) = event {
+            match key.code {
+                KeyCode::Right => {
+                    self.current_tab = self.current_tab.next();
+                    self.tabs = self.tabs.clone().select(&self.current_tab);
+                }
+                KeyCode::Left => {
+                    self.current_tab = self.current_tab.prev();
+                    self.tabs = self.tabs.clone().select(&self.current_tab);
+                }
+                _ => {}
+            }
+        }
+
+        match self.current_tab {
+            FormTabs::Artist => self.artist_form.handle_event(event),
+            FormTabs::Venue => todo!(),
+            FormTabs::Gig => todo!(),
+            FormTabs::City => todo!(),
+        }
     }
 
     pub fn render(&mut self, frame: &mut Frame, area: Rect) {
@@ -43,6 +113,6 @@ impl Form<'_> {
             tabs_area,
         );
 
-        frame.render_widget("Content", content_area);
+        self.artist_form.render(frame, content_area);
     }
 }

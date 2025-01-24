@@ -16,7 +16,7 @@ use crossterm::event::{self, Event, KeyCode};
 use dataset::DataSet;
 use dotenv::dotenv;
 use error::Error;
-use form::Form;
+use forms::Form;
 use gig::Gig;
 use ratatui::{
     layout::{Constraint, Layout},
@@ -98,7 +98,9 @@ impl<'a> App<'a> {
             }
         }
 
-        if let ColumnName::Data = self.focused_column {
+        if self.render_form {
+            self.form.handle_event(event);
+        } else if let ColumnName::Data = self.focused_column {
             self.data_column.handle_event(event)
         }
 
