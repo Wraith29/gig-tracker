@@ -1,3 +1,4 @@
+use crate::error::Error;
 use artist::ArtistForm;
 use crossterm::event::{Event, KeyCode};
 use ratatui::{
@@ -6,8 +7,11 @@ use ratatui::{
     widgets::{Block, Borders, Clear, Tabs},
     Frame,
 };
+use sqlx::{Pool, Sqlite};
 
 mod artist;
+mod listinput;
+mod savebutton;
 mod textinput;
 
 const FORM_TABS: [&str; 4] = ["Artist", "Venue", "Gig", "City"];
@@ -57,18 +61,20 @@ pub struct Form<'a> {
     artist_form: ArtistForm<'a>,
 }
 
-impl Form<'_> {
-    pub fn new() -> Self {
+impl<'a> Form<'a> {
+    pub async fn new(pool: Pool<Sqlite>) -> Result<Self, Error> {
         let tabs = Tabs::new(FORM_TABS);
 
-        Self {
+        let artist_form = ArtistForm::new(pool.clone()).await?;
+
+        Ok(Self {
             tabs,
             current_tab: FormTabs::Artist,
-            artist_form: ArtistForm::new(),
-        }
+            artist_form,
+        })
     }
 
-    pub fn handle_event(&mut self, event: Event) {
+    pub async fn handle_event(&mut self, event: Event) -> Result<(), Error> {
         if let Event::Key(key) = event {
             match key.code {
                 KeyCode::Right => {
@@ -84,11 +90,13 @@ impl Form<'_> {
         }
 
         match self.current_tab {
-            FormTabs::Artist => self.artist_form.handle_event(event),
+            FormTabs::Artist => self.artist_form.handle_event(event).await?,
             FormTabs::Venue => todo!(),
             FormTabs::Gig => todo!(),
             FormTabs::City => todo!(),
         }
+
+        Ok(())
     }
 
     pub fn render(&mut self, frame: &mut Frame, area: Rect) {

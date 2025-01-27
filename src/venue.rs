@@ -16,6 +16,22 @@ impl DataSet for Venue {
             .fetch_all(pool)
             .await?)
     }
+
+    async fn save(val: Self, pool: &Pool<Sqlite>) -> Result<(), Error> {
+        sqlx::query("INSERT INTO \"venue\" (\"name\", \"city_id\") VALUES ($1, $2)")
+            .bind(val.name)
+            .bind(val.city_id)
+            .execute(pool)
+            .await?;
+
+        Ok(())
+    }
+}
+
+impl ToString for Venue {
+    fn to_string(&self) -> String {
+        self.name.clone()
+    }
 }
 
 impl From<Venue> for Row<'_> {

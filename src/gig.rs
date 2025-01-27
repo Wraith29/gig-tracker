@@ -17,6 +17,23 @@ impl DataSet for Gig {
             .fetch_all(pool)
             .await?)
     }
+
+    async fn save(val: Self, pool: &Pool<Sqlite>) -> Result<(), Error> {
+        sqlx::query("INSERT INTO \"gig\" (\"artist_id\", \"venue_id\", \"date\", \"act\") VALUES ($1, $2, $3, $4)")
+            .bind(val.artist_id)
+            .bind(val.venue_id)
+            .bind(val.date.to_string())
+            .bind(val.act.to_string())
+            .execute(pool).await?;
+
+        Ok(())
+    }
+}
+
+impl ToString for Gig {
+    fn to_string(&self) -> String {
+        format!("{} - {}", self.date.to_string(), self.act.to_string())
+    }
 }
 
 impl From<Gig> for Row<'_> {

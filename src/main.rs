@@ -6,13 +6,12 @@ mod dataset;
 mod datatable;
 mod date;
 mod error;
-mod form;
 mod forms;
 mod gig;
 mod venue;
 
 use columns::{data::DataColumn, graph::GraphColumn, ColumnName};
-use crossterm::event::{self, Event, KeyCode};
+use crossterm::event::{self, Event, KeyCode, KeyModifiers};
 use dataset::DataSet;
 use dotenv::dotenv;
 use error::Error;
@@ -48,19 +47,21 @@ impl<'a> App<'a> {
         let gigs = Gig::load_all(&pool).await?;
         let graph_column = GraphColumn::new(gigs);
 
+        let form = Form::new(pool.clone()).await?;
+
         Ok(Self {
             terminal,
             data_column,
             graph_column,
             focused_column: ColumnName::Data,
             render_form: true,
-            form: Form::new(),
+            form,
         })
     }
 
     async fn run(&mut self) -> Result<(), Error> {
         loop {
-            if self.handle_events()? {
+            if self.handle_event().await? {
                 break;
             }
 
@@ -70,7 +71,7 @@ impl<'a> App<'a> {
         Ok(())
     }
 
-    fn handle_events(&mut self) -> Result<bool, Error> {
+    async fn handle_event(&mut self) -> Result<bool, Error> {
         if !event::poll(Duration::from_secs(0))? {
             return Ok(false);
         }
@@ -79,7 +80,11 @@ impl<'a> App<'a> {
 
         if let Event::Key(key) = event {
             match key.code {
-                KeyCode::Char('q') => return Ok(true),
+                KeyCode::Char('c') => {
+                    if key.modifiers == KeyModifiers::CONTROL {
+                        return Ok(true);
+                    }
+                }
                 KeyCode::Char('H') => {
                     if matches!(self.focused_column, ColumnName::Graph) {
                         self.focused_column = ColumnName::Data;
@@ -99,7 +104,7 @@ impl<'a> App<'a> {
         }
 
         if self.render_form {
-            self.form.handle_event(event);
+            self.form.handle_event(event).await?;
         } else if let ColumnName::Data = self.focused_column {
             self.data_column.handle_event(event)
         }
