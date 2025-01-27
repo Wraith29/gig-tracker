@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use ratatui::widgets::Row;
 use sqlx::{Pool, Sqlite};
 
@@ -28,9 +30,9 @@ impl DataSet for Venue {
     }
 }
 
-impl ToString for Venue {
-    fn to_string(&self) -> String {
-        self.name.clone()
+impl Display for Venue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.name)
     }
 }
 

@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use ratatui::widgets::{ListItem, Row};
 use sqlx::{Pool, Sqlite};
 
@@ -26,9 +28,9 @@ impl DataSet for City {
     }
 }
 
-impl ToString for City {
-    fn to_string(&self) -> String {
-        self.name.clone()
+impl Display for City {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.name.clone())
     }
 }
 
@@ -38,8 +40,8 @@ impl From<City> for Row<'_> {
     }
 }
 
-impl<'a> Into<ListItem<'a>> for City {
-    fn into(self) -> ListItem<'a> {
-        ListItem::new(self.name.clone())
+impl<'a> From<City> for ListItem<'a> {
+    fn from(value: City) -> Self {
+        ListItem::new(value.name.clone())
     }
 }

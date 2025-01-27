@@ -17,7 +17,7 @@ impl From<sqlx::Error> for Error {
                     return Error::Str(String::from("Foreign Key Constraint Violated"));
                 }
 
-                return Error::Sqlx(value);
+                Error::Sqlx(value)
             }
             _ => Error::Sqlx(value),
         }

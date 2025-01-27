@@ -32,7 +32,7 @@ impl DataSet for Gig {
 
 impl ToString for Gig {
     fn to_string(&self) -> String {
-        format!("{} - {}", self.date.to_string(), self.act.to_string())
+        format!("{} - {}", self.date, self.act)
     }
 }
 

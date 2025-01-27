@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use ratatui::widgets::Row;
 use sqlx::{Pool, Sqlite};
 
@@ -38,9 +40,9 @@ impl DataSet for Artist {
     }
 }
 
-impl ToString for Artist {
-    fn to_string(&self) -> String {
-        self.name.clone()
+impl Display for Artist {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.name.clone())
     }
 }
 
