@@ -43,7 +43,7 @@ impl<'a, T: DataSet + Into<ListItem<'a>>> ListInput<'a, T> {
     }
 
     pub fn focus(&mut self) {
-        if let None = self.selected {
+        if self.selected.is_none() {
             self.state.select(Some(0));
         } else {
             self.state.select(Some(self.selected_idx));

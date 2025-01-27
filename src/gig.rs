@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use ratatui::widgets::Row;
 use sqlx::{Pool, Sqlite};
 
@@ -30,9 +32,9 @@ impl DataSet for Gig {
     }
 }
 
-impl ToString for Gig {
-    fn to_string(&self) -> String {
-        format!("{} - {}", self.date, self.act)
+impl Display for Gig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} - {}", self.date, self.act)
     }
 }
 

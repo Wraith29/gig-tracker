@@ -1,4 +1,7 @@
-use std::io::{self};
+use std::{
+    fmt::Display,
+    io::{self},
+};
 
 #[derive(Debug)]
 pub enum Error {
@@ -36,12 +39,16 @@ impl From<String> for Error {
     }
 }
 
-impl ToString for Error {
-    fn to_string(&self) -> String {
-        match self {
-            Error::Io(error) => error.to_string(),
-            Error::Sqlx(error) => error.to_string(),
-            Error::Str(error) => error.to_owned(),
-        }
+impl Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Error::Io(error) => error.to_string(),
+                Error::Sqlx(error) => error.to_string(),
+                Error::Str(error) => error.to_owned(),
+            }
+        )
     }
 }
