@@ -40,7 +40,7 @@ impl From<City> for Row<'_> {
     }
 }
 
-impl<'a> From<City> for ListItem<'a> {
+impl From<City> for ListItem<'_> {
     fn from(value: City) -> Self {
         ListItem::new(value.name.clone())
     }

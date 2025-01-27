@@ -77,11 +77,8 @@ impl<'a> TextInput<'a> {
             block = block.border_type(BorderType::Double);
         }
 
-        match self.error.clone() {
-            Some(err) => {
-                block = block.border_style(Style::new().red()).title_bottom(err);
-            }
-            None => {}
+        if let Some(err) = self.error.clone() {
+            block = block.border_style(Style::new().red()).title_bottom(err);
         }
 
         let content_area = block.inner(area);

@@ -134,20 +134,17 @@ impl ArtistForm<'_> {
                     match save_event {
                         SaveButtonEvent::Escape => self.save.unfocus(),
                         SaveButtonEvent::Save => {
-                            match self.save_value().await? {
-                                Some(field_error) => match field_error {
-                                    FieldError::Name(err) => {
-                                        self.name.set_err(err);
-                                    }
-                                    FieldError::City(err) => {
-                                        self.city.set_err(err);
-                                    }
-                                    FieldError::Save(err) => {
-                                        self.save.set_err(err);
-                                    }
-                                },
-                                None => {}
-                            };
+                            if let Some(field_error) = self.save_value().await? { match field_error {
+                                FieldError::Name(err) => {
+                                    self.name.set_err(err);
+                                }
+                                FieldError::City(err) => {
+                                    self.city.set_err(err);
+                                }
+                                FieldError::Save(err) => {
+                                    self.save.set_err(err);
+                                }
+                            } };
                         }
                     }
                 }

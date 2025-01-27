@@ -107,11 +107,8 @@ impl<'a, T: DataSet + Into<ListItem<'a>>> ListInput<'a, T> {
         let mut block = Block::bordered().title_top(self.title);
         let content_area = block.inner(area);
 
-        match self.error.clone() {
-            Some(err) => {
-                block = block.border_style(Style::new().red()).title_bottom(err);
-            }
-            None => {}
+        if let Some(err) = self.error.clone() {
+            block = block.border_style(Style::new().red()).title_bottom(err);
         }
 
         if self.focused {

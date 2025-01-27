@@ -61,7 +61,7 @@ pub struct Form<'a> {
     artist_form: ArtistForm<'a>,
 }
 
-impl<'a> Form<'a> {
+impl Form<'_> {
     pub async fn new(pool: Pool<Sqlite>) -> Result<Self, Error> {
         let tabs = Tabs::new(FORM_TABS);
 
@@ -114,7 +114,7 @@ impl<'a> Form<'a> {
         frame.render_widget(block, mid_area);
 
         frame.render_widget(
-            &self
+            self
                 .tabs
                 .clone()
                 .block(Block::new().borders(Borders::BOTTOM)),
