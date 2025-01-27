@@ -5,18 +5,19 @@ use ratatui::{
 };
 use sqlx::{Pool, Sqlite};
 
-use crate::{
-    artist::{self, Artist},
-    city::City,
-    dataset::DataSet,
-    error::Error,
-};
+use crate::{artist::Artist, city::City, dataset::DataSet, error::Error};
 
 use super::{
     listinput::{ListInput, ListInputEvent},
     savebutton::{SaveButton, SaveButtonEvent},
     textinput::{TextInput, TextInputEvent},
 };
+
+enum FieldError {
+    Name(String),
+    City(String),
+    Save(String),
+}
 
 enum Field {
     None,
@@ -88,11 +89,20 @@ impl ArtistForm<'_> {
     pub async fn handle_event(&mut self, event: Event) -> Result<(), Error> {
         if let Event::Key(key) = event {
             match (key.modifiers, key.code) {
+                (_, KeyCode::Enter) => {
+                    if let Field::None = self.current_field {
+                        self.change_focus(self.current_field.next());
+                        return Ok(());
+                    }
+                }
+
                 (KeyModifiers::CONTROL, KeyCode::Char('j')) => {
                     self.change_focus(self.current_field.next());
+                    return Ok(());
                 }
                 (KeyModifiers::CONTROL, KeyCode::Char('k')) => {
                     self.change_focus(self.current_field.prev());
+                    return Ok(());
                 }
                 _ => {}
             }
@@ -124,7 +134,20 @@ impl ArtistForm<'_> {
                     match save_event {
                         SaveButtonEvent::Escape => self.save.unfocus(),
                         SaveButtonEvent::Save => {
-                            self.save_value().await?;
+                            match self.save_value().await? {
+                                Some(field_error) => match field_error {
+                                    FieldError::Name(err) => {
+                                        self.name.set_err(err);
+                                    }
+                                    FieldError::City(err) => {
+                                        self.city.set_err(err);
+                                    }
+                                    FieldError::Save(err) => {
+                                        self.save.set_err(err);
+                                    }
+                                },
+                                None => {}
+                            };
                         }
                     }
                 }
@@ -150,21 +173,30 @@ impl ArtistForm<'_> {
     }
 
     /// The `Some` value of a return is an error message, because of bad data
-    async fn save_value(&self) -> Result<Option<String>, Error> {
+    async fn save_value(&self) -> Result<Option<FieldError>, Error> {
         let artist_name = match self.name.get_value() {
             Some(name) => name,
-            None => return Ok(Some(String::from("Missing required field \"Artist Name\""))),
+            None => {
+                return Ok(Some(FieldError::Name(
+                    "Field \"Name\" cannot be empty".into(),
+                )))
+            }
         };
 
         let city = match self.city.get_value() {
             Some(city) => city,
-            None => return Ok(Some(String::from("Missing required field \"City\""))),
+            None => {
+                return Ok(Some(FieldError::City(
+                    "Field \"City\" cannot be empty".into(),
+                )))
+            }
         };
 
         let artist = Artist::new(artist_name, city.city_id);
 
-        Artist::save(artist, pool);
-
-        Ok(None)
+        match Artist::save(artist, &self.pool).await {
+            Ok(_) => Ok(None),
+            Err(err) => Ok(Some(FieldError::Save(err.to_string()))),
+        }
     }
 }

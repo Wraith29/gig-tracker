@@ -1,6 +1,6 @@
 use crate::error::Error;
 use artist::ArtistForm;
-use crossterm::event::{Event, KeyCode};
+use crossterm::event::{Event, KeyCode, KeyModifiers};
 use ratatui::{
     layout::{Constraint, Layout, Rect},
     style::Stylize,
@@ -76,12 +76,12 @@ impl<'a> Form<'a> {
 
     pub async fn handle_event(&mut self, event: Event) -> Result<(), Error> {
         if let Event::Key(key) = event {
-            match key.code {
-                KeyCode::Right => {
+            match (key.modifiers, key.code) {
+                (KeyModifiers::CONTROL, KeyCode::Char('l')) => {
                     self.current_tab = self.current_tab.next();
                     self.tabs = self.tabs.clone().select(&self.current_tab);
                 }
-                KeyCode::Left => {
+                (KeyModifiers::CONTROL, KeyCode::Char('h')) => {
                     self.current_tab = self.current_tab.prev();
                     self.tabs = self.tabs.clone().select(&self.current_tab);
                 }

@@ -1,6 +1,7 @@
 use crossterm::event::{Event, KeyCode, KeyModifiers};
 use ratatui::{
     layout::Rect,
+    style::{Style, Stylize},
     widgets::{Block, BorderType},
     Frame,
 };
@@ -13,6 +14,7 @@ pub enum TextInputEvent {
 pub struct TextInput<'a> {
     title: &'a str,
     value: String,
+    error: Option<String>,
     focused: bool,
 }
 
@@ -22,7 +24,12 @@ impl<'a> TextInput<'a> {
             title,
             value: String::new(),
             focused: false,
+            error: None,
         }
+    }
+
+    pub fn set_err(&mut self, err: String) {
+        self.error = Some(err);
     }
 
     pub fn get_value(&self) -> Option<String> {
@@ -64,10 +71,17 @@ impl<'a> TextInput<'a> {
     }
 
     pub fn render(&mut self, frame: &mut Frame, area: Rect) {
-        let mut block = Block::bordered().title(self.title);
+        let mut block = Block::bordered().title_top(self.title);
 
         if self.focused {
             block = block.border_type(BorderType::Double);
+        }
+
+        match self.error.clone() {
+            Some(err) => {
+                block = block.border_style(Style::new().red()).title_bottom(err);
+            }
+            None => {}
         }
 
         let content_area = block.inner(area);

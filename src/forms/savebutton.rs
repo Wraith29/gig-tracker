@@ -1,7 +1,7 @@
 use crossterm::event::{Event, KeyCode};
 use ratatui::{
     layout::Rect,
-    style::Stylize,
+    style::{Style, Stylize},
     text::Text,
     widgets::{Block, BorderType},
     Frame,
@@ -14,11 +14,19 @@ pub enum SaveButtonEvent {
 
 pub struct SaveButton {
     focused: bool,
+    error: Option<String>,
 }
 
 impl SaveButton {
     pub fn new() -> Self {
-        Self { focused: false }
+        Self {
+            focused: false,
+            error: None,
+        }
+    }
+
+    pub fn set_err(&mut self, err: String) {
+        self.error = Some(err);
     }
 
     pub fn focus(&mut self) {
@@ -45,6 +53,13 @@ impl SaveButton {
         let mut block = Block::bordered().white();
         if self.focused {
             block = block.border_type(BorderType::Double);
+        }
+
+        match self.error.clone() {
+            Some(err) => {
+                block = block.border_style(Style::new().red()).title_bottom(err);
+            }
+            None => {}
         }
 
         let content_area = block.inner(area);
