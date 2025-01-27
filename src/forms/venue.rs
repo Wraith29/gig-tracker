@@ -5,7 +5,7 @@ use ratatui::{
 };
 use sqlx::{Pool, Sqlite};
 
-use crate::{artist::Artist, city::City, dataset::DataSet, error::Error};
+use crate::{city::City, dataset::DataSet, error::Error, venue::Venue};
 
 use super::{
     avfield::{AvField, AvFieldError},
@@ -14,7 +14,7 @@ use super::{
     textinput::{TextInput, TextInputEvent},
 };
 
-pub struct ArtistForm<'a> {
+pub struct VenueForm<'a> {
     pool: Pool<Sqlite>,
     current_field: AvField,
 
@@ -23,7 +23,7 @@ pub struct ArtistForm<'a> {
     save: SaveButton,
 }
 
-impl ArtistForm<'_> {
+impl VenueForm<'_> {
     pub async fn new(pool: Pool<Sqlite>) -> Result<Self, Error> {
         let list_input = ListInput::new("City", &pool).await?;
 
@@ -159,9 +159,9 @@ impl ArtistForm<'_> {
             }
         };
 
-        let artist = Artist::new(artist_name, city.city_id);
+        let venue = Venue::new(artist_name, city.city_id);
 
-        match Artist::save(artist, &self.pool).await {
+        match Venue::save(venue, &self.pool).await {
             Ok(_) => Ok(None),
             Err(err) => Ok(Some(AvFieldError::Save(err.to_string()))),
         }

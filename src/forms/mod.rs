@@ -8,11 +8,14 @@ use ratatui::{
     Frame,
 };
 use sqlx::{Pool, Sqlite};
+use venue::VenueForm;
 
 mod artist;
+mod avfield;
 mod listinput;
 mod savebutton;
 mod textinput;
+mod venue;
 
 const FORM_TABS: [&str; 4] = ["Artist", "Venue", "Gig", "City"];
 
@@ -59,6 +62,7 @@ pub struct Form<'a> {
     tabs: Tabs<'a>,
 
     artist_form: ArtistForm<'a>,
+    venue_form: VenueForm<'a>,
 }
 
 impl Form<'_> {
@@ -66,11 +70,13 @@ impl Form<'_> {
         let tabs = Tabs::new(FORM_TABS);
 
         let artist_form = ArtistForm::new(pool.clone()).await?;
+        let venue_form = VenueForm::new(pool.clone()).await?;
 
         Ok(Self {
             tabs,
             current_tab: FormTabs::Artist,
             artist_form,
+            venue_form,
         })
     }
 
@@ -91,7 +97,7 @@ impl Form<'_> {
 
         match self.current_tab {
             FormTabs::Artist => self.artist_form.handle_event(event).await?,
-            FormTabs::Venue => todo!(),
+            FormTabs::Venue => self.venue_form.handle_event(event).await?,
             FormTabs::Gig => todo!(),
             FormTabs::City => todo!(),
         }
@@ -114,13 +120,17 @@ impl Form<'_> {
         frame.render_widget(block, mid_area);
 
         frame.render_widget(
-            self
-                .tabs
+            self.tabs
                 .clone()
                 .block(Block::new().borders(Borders::BOTTOM)),
             tabs_area,
         );
 
-        self.artist_form.render(frame, content_area);
+        match self.current_tab {
+            FormTabs::Artist => self.artist_form.render(frame, content_area),
+            FormTabs::Venue => self.venue_form.render(frame, content_area),
+            FormTabs::Gig => todo!(),
+            FormTabs::City => todo!(),
+        }
     }
 }

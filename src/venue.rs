@@ -12,6 +12,16 @@ pub struct Venue {
     city_id: i64,
 }
 
+impl Venue {
+    pub fn new(name: String, city_id: i64) -> Self {
+        Self {
+            venue_id: 0,
+            name,
+            city_id,
+        }
+    }
+}
+
 impl DataSet for Venue {
     async fn load_all(pool: &Pool<Sqlite>) -> Result<Vec<Self>, Error> {
         Ok(sqlx::query_as!(Venue, "SELECT * FROM venue")
