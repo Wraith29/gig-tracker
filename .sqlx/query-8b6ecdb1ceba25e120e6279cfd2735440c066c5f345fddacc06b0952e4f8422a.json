@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT * FROM gig",
+  "describe": {
+    "columns": [
+      {
+        "name": "artist_id",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "venue_id",
+        "ordinal": 1,
+        "type_info": "Integer"
+      },
+      {
+        "name": "date",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "act",
+        "ordinal": 3,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "8b6ecdb1ceba25e120e6279cfd2735440c066c5f345fddacc06b0952e4f8422a"
+}
