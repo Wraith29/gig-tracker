@@ -1,4 +1,7 @@
-use crate::{date::Month, gig::Gig};
+use crate::{
+    date::{Month, MONTHS},
+    gig::Gig,
+};
 use ratatui::{
     layout::Rect,
     style::{Style, Stylize},
@@ -6,11 +9,6 @@ use ratatui::{
     widgets::{Bar, BarChart, BarGroup, Block, BorderType},
     Frame,
 };
-use std::collections::HashMap;
-
-// const MONTH_LABELS: [&str; 12] = [
-// "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-// ];
 
 pub struct GraphColumn {
     is_focused: bool,
@@ -46,22 +44,19 @@ impl GraphColumn {
         let content_area = block.inner(area);
         frame.render_widget(block, area);
 
-        let mut gig_data_map: HashMap<Month, u32> = HashMap::new();
-
-        self.gigs.iter().for_each(|gig| {
-            if let Some(month) = gig_data_map.get_mut(&gig.date.month) {
-                *month += 1;
-            } else {
-                gig_data_map.insert(gig.date.month.clone(), 1);
-            }
-        });
-
-        let dataset: Vec<Bar> = gig_data_map
+        let dataset: Vec<Bar> = MONTHS
             .iter()
-            .map(|(month, count)| create_vertical_bar(month, *count))
+            .map(|month| {
+                let count =
+                    u64::try_from(self.gigs.iter().filter(|g| g.date.month.eq(month)).count())
+                        .expect("Value should be a valid u64");
+
+                create_vertical_bar(month, count)
+            })
             .collect();
 
         let chart = BarChart::default()
+            .bar_width(3)
             .data(BarGroup::default().bars(&dataset))
             .block(
                 Block::bordered()
@@ -70,33 +65,10 @@ impl GraphColumn {
                     .border_style(Style::default().magenta()),
             );
 
-        // let chart = BarChart::new(vec![gig_dataset])
-        //     .block(
-        //         Block::bordered()
-        //             .title(Line::from("Gig Chart").white().bold().centered())
-        //             .border_type(BorderType::Double)
-        //             .border_style(Style::default().magenta()),
-        //     )
-        //     .x_axis(
-        //         Axis::default()
-        //             .title("Months".white())
-        //             .labels(MONTH_LABELS)
-        //             .bounds([1f64, 12f64])
-        //             .labels_alignment(Alignment::Right),
-        //     )
-        //     .y_axis(
-        //         Axis::default()
-        //             .title("Gig Count".white())
-        //             .bounds([0f64, 100f64])
-        //             .labels(["0", "50", "100"]),
-        //     );
-
         frame.render_widget(chart, content_area);
     }
 }
 
-fn create_vertical_bar<'a>(month: &Month, count: u32) -> Bar<'a> {
-    Bar::default()
-        .value(u64::from(count))
-        .label(month.to_string().into())
+fn create_vertical_bar<'a>(month: &Month, count: u64) -> Bar<'a> {
+    Bar::default().value(count).label(month.to_string().into())
 }

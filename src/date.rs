@@ -19,6 +19,21 @@ pub enum Month {
     Dec,
 }
 
+pub const MONTHS: [Month; 12] = [
+    Month::Jan,
+    Month::Feb,
+    Month::Mar,
+    Month::Apr,
+    Month::May,
+    Month::Jun,
+    Month::Jul,
+    Month::Aug,
+    Month::Sep,
+    Month::Oct,
+    Month::Nov,
+    Month::Dec,
+];
+
 impl From<u32> for Month {
     fn from(value: u32) -> Self {
         match value {
