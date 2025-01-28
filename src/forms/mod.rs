@@ -91,7 +91,7 @@ impl Form<'_> {
         })
     }
 
-    pub async fn handle_event(&mut self, event: Event) -> Result<(), Error> {
+    pub async fn handle_event(&mut self, event: Event) -> Result<bool, Error> {
         if let Event::Key(key) = event {
             match (key.modifiers, key.code) {
                 (KeyModifiers::CONTROL, KeyCode::Char('l')) => {
@@ -106,14 +106,12 @@ impl Form<'_> {
             }
         }
 
-        match self.current_tab {
+        Ok(match self.current_tab {
             FormTabs::Artist => self.artist_form.handle_event(event).await?,
             FormTabs::Venue => self.venue_form.handle_event(event).await?,
             FormTabs::Gig => self.gig_form.handle_event(event).await?,
             FormTabs::City => self.city_form.handle_event(event).await?,
-        }
-
-        Ok(())
+        })
     }
 
     pub fn render(&mut self, frame: &mut Frame, area: Rect) {

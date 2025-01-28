@@ -51,7 +51,7 @@ impl DataColumn<'_> {
     pub async fn new(pool: &Pool<Sqlite>) -> Result<Self, Error> {
         let artist_table = DataTable::new::<Artist>(
             "Artist",
-            pool,
+            pool.clone(),
             [Constraint::Length(20); 3].to_vec(),
             vec!["Artist Id", "Name", "City Id"],
         )
@@ -59,7 +59,7 @@ impl DataColumn<'_> {
 
         let venue_table = DataTable::new::<Venue>(
             "Venue",
-            pool,
+            pool.clone(),
             [Constraint::Length(20); 3].to_vec(),
             vec!["Venue Id", "Name", "City Id"],
         )
@@ -67,7 +67,7 @@ impl DataColumn<'_> {
 
         let gig_table = DataTable::new::<Gig>(
             "Gig",
-            pool,
+            pool.clone(),
             [Constraint::Length(15); 4].to_vec(),
             vec!["Artist Id", "Venue Id", "Date", "Act"],
         )
@@ -75,7 +75,7 @@ impl DataColumn<'_> {
 
         let city_table = DataTable::new::<City>(
             "City",
-            pool,
+            pool.clone(),
             [Constraint::Length(30); 2].to_vec(),
             vec!["City Id", "Name"],
         )
@@ -91,6 +91,34 @@ impl DataColumn<'_> {
             ]),
             focused_app: TableName::Artist,
         })
+    }
+
+    pub async fn reload_data(&mut self) -> Result<(), Error> {
+        self.apps
+            .get_mut(&TableName::Artist)
+            .expect("Artist table should be set")
+            .reload_data::<Artist>()
+            .await?;
+
+        self.apps
+            .get_mut(&TableName::Venue)
+            .expect("Venue table should be set")
+            .reload_data::<Venue>()
+            .await?;
+
+        self.apps
+            .get_mut(&TableName::Gig)
+            .expect("Gig table should be set")
+            .reload_data::<Gig>()
+            .await?;
+
+        self.apps
+            .get_mut(&TableName::City)
+            .expect("City table should be set")
+            .reload_data::<City>()
+            .await?;
+
+        Ok(())
     }
 
     pub fn focus(&mut self) {

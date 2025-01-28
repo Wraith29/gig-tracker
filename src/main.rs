@@ -12,11 +12,9 @@ mod venue;
 
 use columns::{data::DataColumn, graph::GraphColumn, ColumnName};
 use crossterm::event::{self, Event, KeyCode, KeyModifiers};
-use dataset::DataSet;
 use dotenv::dotenv;
 use error::Error;
 use forms::Form;
-use gig::Gig;
 use ratatui::{
     layout::{Constraint, Layout},
     prelude::CrosstermBackend,
@@ -44,8 +42,7 @@ impl<'a> App<'a> {
         let mut data_column = DataColumn::new(&pool).await?;
         data_column.focus();
 
-        let gigs = Gig::load_all(&pool).await?;
-        let graph_column = GraphColumn::new(gigs);
+        let graph_column = GraphColumn::new(pool.clone()).await?;
 
         let form = Form::new(pool.clone()).await?;
 
@@ -54,9 +51,15 @@ impl<'a> App<'a> {
             data_column,
             graph_column,
             focused_column: ColumnName::Data,
-            render_form: true,
+            render_form: false,
             form,
         })
+    }
+
+    async fn reload_data(&mut self) -> Result<(), Error> {
+        self.data_column.reload_data().await?;
+
+        self.graph_column.reload_data().await
     }
 
     async fn run(&mut self) -> Result<(), Error> {
@@ -80,6 +83,9 @@ impl<'a> App<'a> {
 
         if let Event::Key(key) = event {
             match key.code {
+                KeyCode::Char('+') => {
+                    self.render_form = true;
+                }
                 KeyCode::Char('c') => {
                     if key.modifiers == KeyModifiers::CONTROL {
                         return Ok(true);
@@ -104,7 +110,11 @@ impl<'a> App<'a> {
         }
 
         if self.render_form {
-            self.form.handle_event(event).await?;
+            if self.form.handle_event(event).await? {
+                self.reload_data().await?;
+
+                self.render_form = false;
+            };
         } else if let ColumnName::Data = self.focused_column {
             self.data_column.handle_event(event)
         }

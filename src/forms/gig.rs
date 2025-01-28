@@ -106,24 +106,24 @@ impl GigForm<'_> {
         }
     }
 
-    pub async fn handle_event(&mut self, event: Event) -> Result<(), Error> {
+    pub async fn handle_event(&mut self, event: Event) -> Result<bool, Error> {
         if let Event::Key(key) = event {
             match (key.modifiers, key.code) {
                 (_, KeyCode::Enter) => {
                     if let GigField::None = self.current_field {
                         self.change_focus(self.current_field.next());
-                        return Ok(());
+                        return Ok(false);
                     }
                 }
 
                 (KeyModifiers::CONTROL, KeyCode::Char('j')) => {
                     self.change_focus(self.current_field.next());
-                    return Ok(());
+                    return Ok(false);
                 }
 
                 (KeyModifiers::CONTROL, KeyCode::Char('k')) => {
                     self.change_focus(self.current_field.prev());
-                    return Ok(());
+                    return Ok(false);
                 }
 
                 _ => {}
@@ -188,6 +188,8 @@ impl GigForm<'_> {
                                     GigFieldError::Act(err) => self.act_input.set_err(err),
                                     GigFieldError::Save(err) => self.save_button.set_err(err),
                                 }
+                            } else {
+                                return Ok(true);
                             }
                         }
                     }
@@ -197,7 +199,7 @@ impl GigForm<'_> {
             _ => {}
         }
 
-        Ok(())
+        Ok(false)
     }
 
     pub fn render(&mut self, frame: &mut Frame, area: Rect) {

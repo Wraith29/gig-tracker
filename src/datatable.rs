@@ -11,6 +11,7 @@ use crate::{dataset::DataSet, error::Error};
 
 pub struct DataTable<'d> {
     name: &'static str,
+    pool: Pool<Sqlite>,
     is_focused: bool,
     border_style: Style,
     table: Table<'d>,
@@ -20,11 +21,11 @@ pub struct DataTable<'d> {
 impl<'d> DataTable<'d> {
     pub async fn new<T: Into<Row<'d>> + DataSet + Clone>(
         name: &'static str,
-        conn: &Pool<Sqlite>,
+        pool: Pool<Sqlite>,
         constraints: Vec<Constraint>,
         headers: Vec<&'static str>,
     ) -> Result<Self, Error> {
-        let data = T::load_all(conn).await?;
+        let data = T::load_all(&pool).await?;
 
         let table = Table::new(data, constraints)
             .header(Row::new(headers))
@@ -33,11 +34,24 @@ impl<'d> DataTable<'d> {
 
         Ok(Self {
             name,
+            pool,
             is_focused: false,
             border_style: Style::new().red(),
             table,
             state: TableState::default(),
         })
+    }
+
+    pub async fn reload_data<T: Into<Row<'d>> + DataSet + Clone>(&mut self) -> Result<(), Error> {
+        let rows: Vec<Row<'d>> = T::load_all(&self.pool)
+            .await?
+            .iter()
+            .map(|row| row.clone().into())
+            .collect();
+
+        self.table = self.table.clone().rows(rows);
+
+        Ok(())
     }
 
     pub fn focus(&mut self) {

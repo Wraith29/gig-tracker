@@ -1,5 +1,7 @@
 use crate::{
+    dataset::DataSet,
     date::{Month, MONTHS},
+    error::Error,
     gig::Gig,
 };
 use ratatui::{
@@ -9,18 +11,30 @@ use ratatui::{
     widgets::{Bar, BarChart, BarGroup, Block, BorderType},
     Frame,
 };
+use sqlx::{Pool, Sqlite};
 
 pub struct GraphColumn {
+    pool: Pool<Sqlite>,
     is_focused: bool,
     gigs: Vec<Gig>,
 }
 
 impl GraphColumn {
-    pub fn new(gigs: Vec<Gig>) -> Self {
-        Self {
+    pub async fn new(pool: Pool<Sqlite>) -> Result<Self, Error> {
+        let gigs = Gig::load_all(&pool).await?;
+
+        Ok(Self {
+            pool,
             gigs,
             is_focused: false,
-        }
+        })
+    }
+
+    pub async fn reload_data(&mut self) -> Result<(), Error> {
+        let gigs = Gig::load_all(&self.pool).await?;
+        self.gigs = gigs;
+
+        Ok(())
     }
 
     pub fn focus(&mut self) {
