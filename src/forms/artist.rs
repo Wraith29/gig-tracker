@@ -87,6 +87,7 @@ impl ArtistForm<'_> {
                     }
                 }
             }
+
             AvField::City => {
                 if let Some(list_event) = self.city.handle_event(&event) {
                     match list_event {
@@ -97,6 +98,7 @@ impl ArtistForm<'_> {
                     }
                 }
             }
+
             AvField::Save => {
                 if let Some(save_event) = self.save.handle_event(&event) {
                     match save_event {

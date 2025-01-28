@@ -1,6 +1,8 @@
 use crate::error::Error;
 use artist::ArtistForm;
+use city::CityForm;
 use crossterm::event::{Event, KeyCode, KeyModifiers};
+use gig::GigForm;
 use ratatui::{
     layout::{Constraint, Layout, Rect},
     style::Stylize,
@@ -10,8 +12,11 @@ use ratatui::{
 use sqlx::{Pool, Sqlite};
 use venue::VenueForm;
 
+mod actinput;
 mod artist;
 mod avfield;
+mod city;
+mod gig;
 mod listinput;
 mod savebutton;
 mod textinput;
@@ -63,6 +68,8 @@ pub struct Form<'a> {
 
     artist_form: ArtistForm<'a>,
     venue_form: VenueForm<'a>,
+    gig_form: GigForm<'a>,
+    city_form: CityForm<'a>,
 }
 
 impl Form<'_> {
@@ -71,12 +78,16 @@ impl Form<'_> {
 
         let artist_form = ArtistForm::new(pool.clone()).await?;
         let venue_form = VenueForm::new(pool.clone()).await?;
+        let gig_form = GigForm::new(pool.clone()).await?;
+        let city_form = CityForm::new(pool.clone());
 
         Ok(Self {
             tabs,
             current_tab: FormTabs::Artist,
             artist_form,
             venue_form,
+            gig_form,
+            city_form,
         })
     }
 
@@ -98,8 +109,8 @@ impl Form<'_> {
         match self.current_tab {
             FormTabs::Artist => self.artist_form.handle_event(event).await?,
             FormTabs::Venue => self.venue_form.handle_event(event).await?,
-            FormTabs::Gig => todo!(),
-            FormTabs::City => todo!(),
+            FormTabs::Gig => self.gig_form.handle_event(event).await?,
+            FormTabs::City => self.city_form.handle_event(event).await?,
         }
 
         Ok(())
@@ -129,8 +140,8 @@ impl Form<'_> {
         match self.current_tab {
             FormTabs::Artist => self.artist_form.render(frame, content_area),
             FormTabs::Venue => self.venue_form.render(frame, content_area),
-            FormTabs::Gig => todo!(),
-            FormTabs::City => todo!(),
+            FormTabs::Gig => self.gig_form.render(frame, content_area),
+            FormTabs::City => self.city_form.render(frame, content_area),
         }
     }
 }

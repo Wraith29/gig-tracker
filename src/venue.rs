@@ -1,13 +1,13 @@
 use std::fmt::Display;
 
-use ratatui::widgets::Row;
+use ratatui::widgets::{ListItem, Row};
 use sqlx::{Pool, Sqlite};
 
 use crate::{dataset::DataSet, error::Error};
 
 #[derive(Clone)]
 pub struct Venue {
-    venue_id: i64,
+    pub venue_id: i64,
     name: String,
     city_id: i64,
 }
@@ -53,5 +53,11 @@ impl From<Venue> for Row<'_> {
             value.name,
             value.city_id.to_string(),
         ])
+    }
+}
+
+impl From<Venue> for ListItem<'_> {
+    fn from(value: Venue) -> Self {
+        ListItem::new(value.name.clone())
     }
 }

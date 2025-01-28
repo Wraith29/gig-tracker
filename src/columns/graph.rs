@@ -1,17 +1,16 @@
-use crate::gig::Gig;
+use crate::{date::Month, gig::Gig};
 use ratatui::{
-    layout::{Alignment, Rect},
+    layout::Rect,
     style::{Style, Stylize},
-    symbols::Marker,
     text::Line,
-    widgets::{Axis, Block, BorderType, Chart, Dataset, GraphType},
+    widgets::{Bar, BarChart, BarGroup, Block, BorderType},
     Frame,
 };
 use std::collections::HashMap;
 
-const MONTH_LABELS: [&str; 12] = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-];
+// const MONTH_LABELS: [&str; 12] = [
+// "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+// ];
 
 pub struct GraphColumn {
     is_focused: bool,
@@ -47,48 +46,57 @@ impl GraphColumn {
         let content_area = block.inner(area);
         frame.render_widget(block, area);
 
-        let mut gig_data_map: HashMap<u32, u32> = HashMap::new();
+        let mut gig_data_map: HashMap<Month, u32> = HashMap::new();
 
         self.gigs.iter().for_each(|gig| {
             if let Some(month) = gig_data_map.get_mut(&gig.date.month) {
                 *month += 1;
             } else {
-                gig_data_map.insert(gig.date.month, 1);
+                gig_data_map.insert(gig.date.month.clone(), 1);
             }
         });
 
-        let gig_data: Vec<(f64, f64)> = gig_data_map
+        let dataset: Vec<Bar> = gig_data_map
             .iter()
-            .map(|(k, v)| (f64::from(*k), f64::from(*v)))
+            .map(|(month, count)| create_vertical_bar(month, *count))
             .collect();
 
-        let gig_dataset = Dataset::default()
-            .marker(Marker::HalfBlock)
-            .graph_type(GraphType::Bar)
-            .style(Style::new().white())
-            .data(&gig_data);
-
-        let chart = Chart::new(vec![gig_dataset])
+        let chart = BarChart::default()
+            .data(BarGroup::default().bars(&dataset))
             .block(
                 Block::bordered()
                     .title(Line::from("Gig Chart").white().bold().centered())
                     .border_type(BorderType::Double)
                     .border_style(Style::default().magenta()),
-            )
-            .x_axis(
-                Axis::default()
-                    .title("Months".white())
-                    .labels(MONTH_LABELS)
-                    .bounds([1f64, 12f64])
-                    .labels_alignment(Alignment::Right),
-            )
-            .y_axis(
-                Axis::default()
-                    .title("Gig Count".white())
-                    .bounds([0f64, 100f64])
-                    .labels(["0", "50", "100"]),
             );
+
+        // let chart = BarChart::new(vec![gig_dataset])
+        //     .block(
+        //         Block::bordered()
+        //             .title(Line::from("Gig Chart").white().bold().centered())
+        //             .border_type(BorderType::Double)
+        //             .border_style(Style::default().magenta()),
+        //     )
+        //     .x_axis(
+        //         Axis::default()
+        //             .title("Months".white())
+        //             .labels(MONTH_LABELS)
+        //             .bounds([1f64, 12f64])
+        //             .labels_alignment(Alignment::Right),
+        //     )
+        //     .y_axis(
+        //         Axis::default()
+        //             .title("Gig Count".white())
+        //             .bounds([0f64, 100f64])
+        //             .labels(["0", "50", "100"]),
+        //     );
 
         frame.render_widget(chart, content_area);
     }
+}
+
+fn create_vertical_bar<'a>(month: &Month, count: u32) -> Bar<'a> {
+    Bar::default()
+        .value(u64::from(count))
+        .label(month.to_string().into())
 }

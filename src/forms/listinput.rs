@@ -26,22 +26,6 @@ pub struct ListInput<'a, T> {
 }
 
 impl<'a, T: DataSet + Into<ListItem<'a>>> ListInput<'a, T> {
-    pub async fn new(title: &'a str, pool: &Pool<Sqlite>) -> Result<Self, Error> {
-        let values = T::load_all(pool).await?;
-        let list = List::new(values.clone()).highlight_style(Style::new().on_gray());
-
-        Ok(Self {
-            title,
-            list,
-            error: None,
-            focused: false,
-            values,
-            selected: None,
-            selected_idx: 0,
-            state: ListState::default(),
-        })
-    }
-
     pub fn focus(&mut self) {
         if self.selected.is_none() {
             self.state.select(Some(0));
@@ -50,14 +34,6 @@ impl<'a, T: DataSet + Into<ListItem<'a>>> ListInput<'a, T> {
         }
 
         self.focused = true;
-    }
-
-    pub fn unfocus(&mut self) {
-        self.focused = false;
-    }
-
-    pub fn set_err(&mut self, err: String) {
-        self.error = Some(err);
     }
 
     pub fn get_value(&self) -> Option<T> {
@@ -77,6 +53,7 @@ impl<'a, T: DataSet + Into<ListItem<'a>>> ListInput<'a, T> {
 
                     return Some(ListInputEvent::Select);
                 }
+
                 KeyCode::Char('j') => {
                     self.state.select_next();
                     if let Some(idx) = self.state.selected() {
@@ -103,6 +80,22 @@ impl<'a, T: DataSet + Into<ListItem<'a>>> ListInput<'a, T> {
         None
     }
 
+    pub async fn new(title: &'a str, pool: &Pool<Sqlite>) -> Result<Self, Error> {
+        let values = T::load_all(pool).await?;
+        let list = List::new(values.clone()).highlight_style(Style::new().on_gray());
+
+        Ok(Self {
+            title,
+            list,
+            error: None,
+            focused: false,
+            values,
+            selected: None,
+            selected_idx: 0,
+            state: ListState::default(),
+        })
+    }
+
     pub fn render(&mut self, frame: &mut Frame, area: Rect) {
         let mut block = Block::bordered().title_top(self.title);
         let content_area = block.inner(area);
@@ -121,5 +114,13 @@ impl<'a, T: DataSet + Into<ListItem<'a>>> ListInput<'a, T> {
             frame.render_widget(block, area);
             frame.render_widget(&self.list, content_area);
         }
+    }
+
+    pub fn set_err(&mut self, err: String) {
+        self.error = Some(err);
+    }
+
+    pub fn unfocus(&mut self) {
+        self.focused = false;
     }
 }

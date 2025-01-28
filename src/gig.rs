@@ -13,6 +13,17 @@ pub struct Gig {
     act: Act,
 }
 
+impl Gig {
+    pub fn new(artist_id: i64, venue_id: i64, date: Date, act: Act) -> Self {
+        Self {
+            artist_id,
+            venue_id,
+            date,
+            act,
+        }
+    }
+}
+
 impl DataSet for Gig {
     async fn load_all(pool: &Pool<Sqlite>) -> Result<Vec<Self>, Error> {
         Ok(sqlx::query_as!(Gig, "SELECT * FROM gig")
