@@ -39,6 +39,12 @@ impl DataSet for City {
         Ok(())
     }
 
+    fn contains(&self, val: String) -> bool {
+        let search = val.as_str();
+
+        self.name.contains(&search)
+    }
+
     fn key(&self) -> impl Ord + Clone {
         &self.name
     }

@@ -47,6 +47,16 @@ impl DataSet for Artist {
         Ok(())
     }
 
+    fn contains(&self, val: String) -> bool {
+        let search = val.as_str();
+
+        self.name.contains(&search)
+            || self
+                .city_name
+                .as_ref()
+                .is_some_and(|name| name.contains(&search))
+    }
+
     fn key(&self) -> impl Ord + Clone {
         &self.name
     }
