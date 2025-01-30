@@ -1,19 +1,54 @@
-use std::io;
+use std::{
+    fmt::Display,
+    io::{self},
+};
 
 #[derive(Debug)]
-pub enum GTError {
-    Sqlx(sqlx::Error),
+pub enum Error {
     Io(io::Error),
+    Sqlx(sqlx::Error),
+    Str(String),
 }
 
-impl From<sqlx::Error> for GTError {
+impl From<sqlx::Error> for Error {
     fn from(value: sqlx::Error) -> Self {
-        Self::Sqlx(value)
+        match &value {
+            sqlx::Error::Database(db_err) => {
+                if db_err.is_unique_violation() {
+                    return Error::Str(String::from("Unique Constraint Violated"));
+                } else if db_err.is_foreign_key_violation() {
+                    return Error::Str(String::from("Foreign Key Constraint Violated"));
+                }
+
+                Error::Sqlx(value)
+            }
+            _ => Error::Sqlx(value),
+        }
     }
 }
 
-impl From<io::Error> for GTError {
+impl From<io::Error> for Error {
     fn from(value: io::Error) -> Self {
-        Self::Io(value)
+        Error::Io(value)
+    }
+}
+
+impl From<String> for Error {
+    fn from(value: String) -> Self {
+        Error::Str(value)
+    }
+}
+
+impl Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Error::Io(error) => error.to_string(),
+                Error::Sqlx(error) => error.to_string(),
+                Error::Str(error) => error.to_owned(),
+            }
+        )
     }
 }

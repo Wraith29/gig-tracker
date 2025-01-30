@@ -1,8 +1,10 @@
-use sqlx::SqlitePool;
+use sqlx::{Pool, Sqlite};
 
-use crate::error::GTError;
+use crate::error::Error;
 
-pub trait DataSet: Sized {
-    async fn create(value: Self, pool: &SqlitePool) -> Result<(), GTError>;
-    async fn load_all(pool: &SqlitePool) -> Result<Vec<Self>, GTError>;
+pub trait DataSet: Sized + Clone + ToString {
+    async fn load_all(pool: &Pool<Sqlite>) -> Result<Vec<Self>, Error>;
+    async fn save(val: Self, pool: &Pool<Sqlite>) -> Result<(), Error>;
+
+    fn key(&self) -> impl Ord + Clone;
 }

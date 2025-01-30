@@ -1,84 +1,90 @@
 use crossterm::event::{Event, KeyCode};
 use ratatui::{
-    layout::{Constraint, Layout, Rect},
+    layout::{Constraint, Rect},
     style::{Style, Stylize},
-    text::Text,
     widgets::{Block, BorderType, Row, Table, TableState},
     Frame,
 };
-use sqlx::SqlitePool;
+use sqlx::{Pool, Sqlite};
 
-use crate::{dataset::DataSet, error::GTError};
+use crate::{dataset::DataSet, error::Error};
 
-const HELP_TEXT: &str = "j - down, k - up, + - create, <- back";
-
-pub struct DataTable<'a> {
-    title: String,
-    focused: bool,
-    style: Style,
-    table: Table<'a>,
+pub struct DataTable<'d> {
+    name: &'static str,
+    pool: Pool<Sqlite>,
+    is_focused: bool,
+    border_style: Style,
+    table: Table<'d>,
     state: TableState,
 }
 
-impl<'a> DataTable<'a> {
-    pub async fn new<T: Into<Row<'a>> + DataSet>(
-        title: impl Into<String>,
-        pool: &SqlitePool,
+impl<'d> DataTable<'d> {
+    pub async fn new<T: Into<Row<'d>> + DataSet + Clone + Ord>(
+        name: &'static str,
+        pool: Pool<Sqlite>,
         constraints: Vec<Constraint>,
         headers: Vec<&'static str>,
-    ) -> Result<Self, GTError> {
-        let data = T::load_all(pool).await?;
+    ) -> Result<Self, Error> {
+        let mut data = T::load_all(&pool).await?;
+        data.sort_unstable_by(|l, r| l.key().cmp(&r.key()));
 
         let table = Table::new(data, constraints)
-            .header(Row::new(headers).underlined())
-            .row_highlight_style(Style::new().on_gray().dark_gray());
+            .header(Row::new(headers))
+            .style(Style::new().white())
+            .row_highlight_style(Style::new().dark_gray().on_gray());
 
         Ok(Self {
+            name,
+            pool,
+            is_focused: false,
+            border_style: Style::new().red(),
             table,
-            focused: false,
-            title: title.into(),
-            style: Style::new().red(),
             state: TableState::default(),
         })
     }
 
-    pub fn handle_event(&mut self, event: &Event) {
-        match event {
-            Event::Key(key) => match key.code {
-                KeyCode::Char('k') => self.state.select_previous(),
-                KeyCode::Char('j') => self.state.select_next(),
-                _ => {}
-            },
-            _ => {}
-        }
+    pub async fn reload_data<T: Into<Row<'d>> + DataSet + Clone + Ord>(
+        &mut self,
+    ) -> Result<(), Error> {
+        let mut data = T::load_all(&self.pool).await?;
+        data.sort_unstable_by(|l, r| l.key().cmp(&r.key()));
+
+        let rows: Vec<Row<'d>> = data.iter().map(|row| row.clone().into()).collect();
+
+        self.table = self.table.clone().rows(rows);
+
+        Ok(())
     }
 
     pub fn focus(&mut self) {
-        self.focused = true;
-        self.style = self.style.green();
-        self.table = self.table.clone().slow_blink();
+        self.is_focused = true;
+        self.border_style = self.border_style.green();
     }
 
     pub fn unfocus(&mut self) {
-        self.focused = false;
-        self.style = self.style.red();
+        self.is_focused = false;
+        self.border_style = self.border_style.red();
     }
 
     pub fn render(&mut self, frame: &mut Frame, area: Rect) {
         let block = Block::bordered()
-            .title(self.title.clone())
             .border_type(BorderType::Rounded)
-            .border_style(self.style);
+            .title(self.name)
+            .style(self.border_style);
 
-        let [content_area, help_area] =
-            Layout::vertical(vec![Constraint::Fill(1), Constraint::Length(1)])
-                .areas(block.inner(area));
+        let content_area = block.inner(area);
 
         frame.render_widget(block, area);
         frame.render_stateful_widget(&self.table, content_area, &mut self.state);
-        frame.render_widget(
-            Text::from(HELP_TEXT).style(Style::new().on_dark_gray().white()),
-            help_area,
-        );
+    }
+
+    pub fn handle_event(&mut self, event: Event) {
+        if let Event::Key(key) = event {
+            match key.code {
+                KeyCode::Char('k') => self.state.select_previous(),
+                KeyCode::Char('j') => self.state.select_next(),
+                _ => {}
+            }
+        }
     }
 }
