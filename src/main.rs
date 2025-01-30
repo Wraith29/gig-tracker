@@ -8,7 +8,6 @@ mod date;
 mod error;
 mod forms;
 mod gig;
-mod style;
 mod venue;
 
 use columns::{data::DataColumn, graph::GraphColumn, ColumnName};
