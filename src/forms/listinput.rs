@@ -25,7 +25,7 @@ pub struct ListInput<'a, T> {
     state: ListState,
 }
 
-impl<'a, T: DataSet + Into<ListItem<'a>>> ListInput<'a, T> {
+impl<'a, T: DataSet + Into<ListItem<'a>> + Ord> ListInput<'a, T> {
     pub fn focus(&mut self) {
         if self.selected.is_none() {
             self.state.select(Some(0));
@@ -81,7 +81,9 @@ impl<'a, T: DataSet + Into<ListItem<'a>>> ListInput<'a, T> {
     }
 
     pub async fn new(title: &'a str, pool: &Pool<Sqlite>) -> Result<Self, Error> {
-        let values = T::load_all(pool).await?;
+        let mut values = T::load_all(pool).await?;
+        values.sort_unstable_by(|l, r| l.key().cmp(&r.key()));
+
         let list = List::new(values.clone()).highlight_style(Style::new().on_gray());
 
         Ok(Self {

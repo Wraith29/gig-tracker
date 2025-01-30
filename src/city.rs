@@ -5,10 +5,16 @@ use sqlx::{Pool, Sqlite};
 
 use crate::{dataset::DataSet, error::Error};
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, PartialOrd)]
 pub struct City {
     pub city_id: i64,
     name: String,
+}
+
+impl Ord for City {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.name.cmp(&other.name)
+    }
 }
 
 impl City {
@@ -31,6 +37,10 @@ impl DataSet for City {
             .await?;
 
         Ok(())
+    }
+
+    fn key(&self) -> impl Ord + Clone {
+        &self.name
     }
 }
 

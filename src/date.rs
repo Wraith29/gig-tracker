@@ -1,8 +1,8 @@
-use std::fmt::Display;
+use std::{cmp::Ordering, fmt::Display};
 
 use crate::error::Error;
 
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Month {
     Unknown,
     Jan = 1,
@@ -98,11 +98,31 @@ impl Display for Month {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, PartialOrd)]
 pub struct Date {
     pub date: u32,
     pub month: Month,
     pub year: u32,
+}
+
+impl Ord for Date {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        if self.year > other.year {
+            return Ordering::Greater;
+        } else if self.year < other.year {
+            return Ordering::Less;
+        } else if self.month > other.month {
+            return Ordering::Greater;
+        } else if self.month < other.month {
+            return Ordering::Less;
+        } else if self.date > other.date {
+            return Ordering::Greater;
+        } else if self.date < other.date {
+            return Ordering::Less;
+        }
+
+        Ordering::Equal
+    }
 }
 
 impl Date {

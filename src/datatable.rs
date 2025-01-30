@@ -19,13 +19,14 @@ pub struct DataTable<'d> {
 }
 
 impl<'d> DataTable<'d> {
-    pub async fn new<T: Into<Row<'d>> + DataSet + Clone>(
+    pub async fn new<T: Into<Row<'d>> + DataSet + Clone + Ord>(
         name: &'static str,
         pool: Pool<Sqlite>,
         constraints: Vec<Constraint>,
         headers: Vec<&'static str>,
     ) -> Result<Self, Error> {
-        let data = T::load_all(&pool).await?;
+        let mut data = T::load_all(&pool).await?;
+        data.sort_unstable_by(|l, r| l.key().cmp(&r.key()));
 
         let table = Table::new(data, constraints)
             .header(Row::new(headers))
@@ -42,12 +43,13 @@ impl<'d> DataTable<'d> {
         })
     }
 
-    pub async fn reload_data<T: Into<Row<'d>> + DataSet + Clone>(&mut self) -> Result<(), Error> {
-        let rows: Vec<Row<'d>> = T::load_all(&self.pool)
-            .await?
-            .iter()
-            .map(|row| row.clone().into())
-            .collect();
+    pub async fn reload_data<T: Into<Row<'d>> + DataSet + Clone + Ord>(
+        &mut self,
+    ) -> Result<(), Error> {
+        let mut data = T::load_all(&self.pool).await?;
+        data.sort_unstable_by(|l, r| l.key().cmp(&r.key()));
+
+        let rows: Vec<Row<'d>> = data.iter().map(|row| row.clone().into()).collect();
 
         self.table = self.table.clone().rows(rows);
 

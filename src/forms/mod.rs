@@ -63,6 +63,7 @@ impl From<&FormTabs> for Option<usize> {
 }
 
 pub struct Form<'a> {
+    pool: Pool<Sqlite>,
     current_tab: FormTabs,
     tabs: Tabs<'a>,
 
@@ -82,6 +83,7 @@ impl Form<'_> {
         let city_form = CityForm::new(pool.clone());
 
         Ok(Self {
+            pool,
             tabs,
             current_tab: FormTabs::Artist,
             artist_form,
@@ -89,6 +91,15 @@ impl Form<'_> {
             gig_form,
             city_form,
         })
+    }
+
+    pub async fn reset_and_reload(&mut self) -> Result<(), Error> {
+        self.artist_form = ArtistForm::new(self.pool.clone()).await?;
+        self.venue_form = VenueForm::new(self.pool.clone()).await?;
+        self.gig_form = GigForm::new(self.pool.clone()).await?;
+        self.city_form = CityForm::new(self.pool.clone());
+
+        Ok(())
     }
 
     pub async fn handle_event(&mut self, event: Event) -> Result<bool, Error> {
@@ -115,8 +126,18 @@ impl Form<'_> {
     }
 
     pub fn render(&mut self, frame: &mut Frame, area: Rect) {
-        let [_, mid_col, _] = Layout::horizontal([Constraint::Fill(1); 3]).areas(area);
-        let [_, mid_area, _] = Layout::vertical([Constraint::Fill(1); 3]).areas(mid_col);
+        let [_, mid_col, _] = Layout::horizontal(vec![
+            Constraint::Fill(1),
+            Constraint::Percentage(50),
+            Constraint::Fill(1),
+        ])
+        .areas(area);
+        let [_, mid_area, _] = Layout::vertical(vec![
+            Constraint::Fill(1),
+            Constraint::Percentage(50),
+            Constraint::Fill(1),
+        ])
+        .areas(mid_col);
 
         let block = Block::bordered().white().title("Create New");
 

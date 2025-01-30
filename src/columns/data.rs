@@ -53,7 +53,7 @@ impl DataColumn<'_> {
             "Artist",
             pool.clone(),
             [Constraint::Length(20); 3].to_vec(),
-            vec!["Artist Id", "Name", "City Id"],
+            vec!["Artist Id", "Name", "City Name"],
         )
         .await?;
 
@@ -61,7 +61,7 @@ impl DataColumn<'_> {
             "Venue",
             pool.clone(),
             [Constraint::Length(20); 3].to_vec(),
-            vec!["Venue Id", "Name", "City Id"],
+            vec!["Venue Id", "Name", "City Name"],
         )
         .await?;
 
@@ -69,7 +69,7 @@ impl DataColumn<'_> {
             "Gig",
             pool.clone(),
             [Constraint::Length(15); 4].to_vec(),
-            vec!["Artist Id", "Venue Id", "Date", "Act"],
+            vec!["Artist", "Venue", "Date", "Act"],
         )
         .await?;
 

@@ -8,6 +8,7 @@ mod date;
 mod error;
 mod forms;
 mod gig;
+mod style;
 mod venue;
 
 use columns::{data::DataColumn, graph::GraphColumn, ColumnName};
@@ -58,8 +59,10 @@ impl<'a> App<'a> {
 
     async fn reload_data(&mut self) -> Result<(), Error> {
         self.data_column.reload_data().await?;
+        self.graph_column.reload_data().await?;
+        self.form.reset_and_reload().await?;
 
-        self.graph_column.reload_data().await
+        Ok(())
     }
 
     async fn run(&mut self) -> Result<(), Error> {
@@ -85,6 +88,10 @@ impl<'a> App<'a> {
             match key.code {
                 KeyCode::Char('+') => {
                     self.render_form = true;
+                }
+                KeyCode::Esc => {
+                    self.render_form = false;
+                    self.form.reset_and_reload().await?;
                 }
                 KeyCode::Char('c') => {
                     if key.modifiers == KeyModifiers::CONTROL {

@@ -56,10 +56,10 @@ impl ActInput {
                     self.selected = Some(self.current_tab.clone());
                     return Some(ActInputEvent::Select);
                 }
-                KeyCode::Char('j') => {
+                KeyCode::Char('l') => {
                     self.current_tab = self.current_tab.next();
                 }
-                KeyCode::Char('k') => {
+                KeyCode::Char('h') => {
                     self.current_tab = self.current_tab.prev();
                 }
                 _ => {}

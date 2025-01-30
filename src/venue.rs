@@ -5,11 +5,18 @@ use sqlx::{Pool, Sqlite};
 
 use crate::{dataset::DataSet, error::Error};
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, PartialOrd)]
 pub struct Venue {
     pub venue_id: i64,
     name: String,
     city_id: i64,
+    city_name: Option<String>,
+}
+
+impl Ord for Venue {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.name.cmp(&other.name)
+    }
 }
 
 impl Venue {
@@ -18,13 +25,14 @@ impl Venue {
             venue_id: 0,
             name,
             city_id,
+            city_name: None,
         }
     }
 }
 
 impl DataSet for Venue {
     async fn load_all(pool: &Pool<Sqlite>) -> Result<Vec<Self>, Error> {
-        Ok(sqlx::query_as!(Venue, "SELECT * FROM venue")
+        Ok(sqlx::query_as!(Venue, "SELECT 'v'.'venue_id', 'v'.'name', 'v'.'city_id', 'c'.'name' AS 'city_name' FROM 'venue' v INNER JOIN 'city' c ON 'c'.'city_id' = 'v'.'city_id'")
             .fetch_all(pool)
             .await?)
     }
@@ -37,6 +45,10 @@ impl DataSet for Venue {
             .await?;
 
         Ok(())
+    }
+
+    fn key(&self) -> impl Ord + Clone {
+        &self.name
     }
 }
 
@@ -51,7 +63,7 @@ impl From<Venue> for Row<'_> {
         Row::new(vec![
             value.venue_id.to_string(),
             value.name,
-            value.city_id.to_string(),
+            value.city_name.unwrap(),
         ])
     }
 }
