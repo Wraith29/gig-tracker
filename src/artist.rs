@@ -48,13 +48,13 @@ impl DataSet for Artist {
     }
 
     fn contains(&self, val: String) -> bool {
-        let search = val.as_str();
+        let search = val.as_str().to_lowercase();
 
-        self.name.contains(&search)
+        self.name.to_lowercase().contains(&search)
             || self
                 .city_name
                 .as_ref()
-                .is_some_and(|name| name.contains(&search))
+                .is_some_and(|name| name.to_lowercase().contains(&search))
     }
 
     fn key(&self) -> impl Ord + Clone {

@@ -1,6 +1,4 @@
-use std::collections::HashMap;
-
-use crossterm::event::{Event, KeyCode};
+use crossterm::event::{Event, KeyCode, KeyModifiers};
 use ratatui::{
     layout::{Constraint, Layout, Rect},
     style::{Style, Stylize},
@@ -13,8 +11,8 @@ use crate::{
     artist::Artist, city::City, datatable::DataTable, error::Error, gig::Gig, venue::Venue,
 };
 
-#[derive(Hash, PartialEq, Eq)]
-enum TableName {
+#[derive(Hash, PartialEq, Eq, Clone)]
+pub enum TableName {
     Artist,
     Gig,
     Venue,
@@ -43,13 +41,18 @@ impl TableName {
 
 pub struct DataColumn<'a> {
     is_focused: bool,
-    apps: HashMap<TableName, DataTable<'a>>,
-    focused_app: TableName,
+
+    artist_table: DataTable<'a, Artist>,
+    venue_table: DataTable<'a, Venue>,
+    gig_table: DataTable<'a, Gig>,
+    city_table: DataTable<'a, City>,
+
+    pub focused_app: TableName,
 }
 
 impl DataColumn<'_> {
     pub async fn new(pool: &Pool<Sqlite>) -> Result<Self, Error> {
-        let artist_table = DataTable::new::<Artist>(
+        let artist_table = DataTable::new(
             "Artist",
             pool.clone(),
             [Constraint::Length(20); 3].to_vec(),
@@ -57,7 +60,7 @@ impl DataColumn<'_> {
         )
         .await?;
 
-        let venue_table = DataTable::new::<Venue>(
+        let venue_table = DataTable::new(
             "Venue",
             pool.clone(),
             [Constraint::Length(20); 3].to_vec(),
@@ -65,7 +68,7 @@ impl DataColumn<'_> {
         )
         .await?;
 
-        let gig_table = DataTable::new::<Gig>(
+        let gig_table = DataTable::new(
             "Gig",
             pool.clone(),
             [Constraint::Length(15); 4].to_vec(),
@@ -73,7 +76,7 @@ impl DataColumn<'_> {
         )
         .await?;
 
-        let city_table = DataTable::new::<City>(
+        let city_table = DataTable::new(
             "City",
             pool.clone(),
             [Constraint::Length(30); 2].to_vec(),
@@ -83,57 +86,52 @@ impl DataColumn<'_> {
 
         Ok(Self {
             is_focused: true,
-            apps: HashMap::from([
-                (TableName::Artist, artist_table),
-                (TableName::Venue, venue_table),
-                (TableName::Gig, gig_table),
-                (TableName::City, city_table),
-            ]),
+            artist_table,
+            venue_table,
+            gig_table,
+            city_table,
             focused_app: TableName::Artist,
         })
     }
 
     pub async fn reload_data(&mut self) -> Result<(), Error> {
-        self.apps
-            .get_mut(&TableName::Artist)
-            .expect("Artist table should be set")
-            .reload_data::<Artist>()
-            .await?;
-
-        self.apps
-            .get_mut(&TableName::Venue)
-            .expect("Venue table should be set")
-            .reload_data::<Venue>()
-            .await?;
-
-        self.apps
-            .get_mut(&TableName::Gig)
-            .expect("Gig table should be set")
-            .reload_data::<Gig>()
-            .await?;
-
-        self.apps
-            .get_mut(&TableName::City)
-            .expect("City table should be set")
-            .reload_data::<City>()
-            .await?;
+        self.artist_table.reload_data().await?;
+        self.venue_table.reload_data().await?;
+        self.gig_table.reload_data().await?;
+        self.city_table.reload_data().await?;
 
         Ok(())
     }
 
-    pub fn focus(&mut self) {
+    pub fn focus(&mut self, new_focus: TableName) {
         self.is_focused = true;
 
-        self.apps
-            .get_mut(&self.focused_app)
-            .expect("focused app should be available")
-            .focus();
+        match self.focused_app {
+            TableName::Artist => self.artist_table.unfocus(),
+            TableName::Gig => self.gig_table.unfocus(),
+            TableName::Venue => self.venue_table.unfocus(),
+            TableName::City => self.city_table.unfocus(),
+        }
+
+        self.focused_app = new_focus;
+
+        match self.focused_app {
+            TableName::Artist => self.artist_table.focus(),
+            TableName::Gig => self.gig_table.focus(),
+            TableName::Venue => self.venue_table.focus(),
+            TableName::City => self.city_table.focus(),
+        }
     }
 
     pub fn unfocus(&mut self) {
         self.is_focused = false;
 
-        self.apps.iter_mut().for_each(|(_, app)| app.unfocus());
+        match self.focused_app {
+            TableName::Artist => self.artist_table.focus(),
+            TableName::Gig => self.gig_table.focus(),
+            TableName::Venue => self.venue_table.focus(),
+            TableName::City => self.city_table.focus(),
+        }
     }
 
     pub fn render(&mut self, frame: &mut Frame, area: Rect) {
@@ -152,47 +150,26 @@ impl DataColumn<'_> {
         let [artist_area, venue_area, gig_area, city_area] =
             Layout::vertical([Constraint::Fill(1); 4]).areas(content_area);
 
-        self.apps
-            .get_mut(&TableName::Artist)
-            .expect("Artist Table should be set")
-            .render(frame, artist_area);
-
-        self.apps
-            .get_mut(&TableName::Venue)
-            .expect("Venue Table should be set")
-            .render(frame, venue_area);
-
-        self.apps
-            .get_mut(&TableName::Gig)
-            .expect("Gig Table should be set")
-            .render(frame, gig_area);
-
-        self.apps
-            .get_mut(&TableName::City)
-            .expect("Gig Table should be set")
-            .render(frame, city_area);
+        self.artist_table.render(frame, artist_area);
+        self.venue_table.render(frame, venue_area);
+        self.gig_table.render(frame, gig_area);
+        self.city_table.render(frame, city_area);
     }
 
     pub fn handle_event(&mut self, event: Event) {
         if let Event::Key(key) = event {
-            match key.code {
-                KeyCode::Char('K') => {
-                    self.apps.get_mut(&self.focused_app).unwrap().unfocus();
-                    self.focused_app = self.focused_app.prev();
-                    self.apps.get_mut(&self.focused_app).unwrap().focus();
-                }
-                KeyCode::Char('J') => {
-                    self.apps.get_mut(&self.focused_app).unwrap().unfocus();
-                    self.focused_app = self.focused_app.next();
-                    self.apps.get_mut(&self.focused_app).unwrap().focus();
-                }
+            match (key.modifiers, key.code) {
+                (KeyModifiers::CONTROL, KeyCode::Char('k')) => self.focus(self.focused_app.prev()),
+                (KeyModifiers::CONTROL, KeyCode::Char('j')) => self.focus(self.focused_app.next()),
                 _ => {}
             }
         }
 
-        self.apps
-            .get_mut(&self.focused_app)
-            .unwrap()
-            .handle_event(event);
+        match self.focused_app {
+            TableName::Artist => self.artist_table.handle_event(event),
+            TableName::Venue => self.venue_table.handle_event(event),
+            TableName::City => self.city_table.handle_event(event),
+            TableName::Gig => self.gig_table.handle_event(event),
+        }
     }
 }

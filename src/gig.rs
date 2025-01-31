@@ -62,15 +62,15 @@ impl DataSet for Gig {
     }
 
     fn contains(&self, val: String) -> bool {
-        let search = val.as_str();
+        let search = val.as_str().to_lowercase();
 
         self.artist_name
             .as_ref()
-            .is_some_and(|name| name.contains(&search))
+            .is_some_and(|name| name.to_lowercase().contains(&search))
             || self
                 .venue_name
                 .as_ref()
-                .is_some_and(|name| name.contains(&search))
+                .is_some_and(|name| name.to_lowercase().contains(&search))
     }
 
     fn key(&self) -> impl Ord + Clone {

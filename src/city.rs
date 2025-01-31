@@ -40,9 +40,9 @@ impl DataSet for City {
     }
 
     fn contains(&self, val: String) -> bool {
-        let search = val.as_str();
+        let search = val.as_str().to_lowercase();
 
-        self.name.contains(&search)
+        self.name.to_lowercase().contains(&search)
     }
 
     fn key(&self) -> impl Ord + Clone {
