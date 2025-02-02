@@ -10,7 +10,11 @@ mod forms;
 mod gig;
 mod venue;
 
-use columns::{data::DataColumn, graph::GraphColumn, ColumnName};
+use columns::{
+    data::{DataColumn, TableName},
+    graph::GraphColumn,
+    ColumnName,
+};
 use crossterm::event::{self, Event, KeyCode, KeyModifiers};
 use dotenv::dotenv;
 use error::Error;
@@ -40,7 +44,7 @@ impl<'a> App<'a> {
         terminal.clear()?;
 
         let mut data_column = DataColumn::new(&pool).await?;
-        data_column.focus();
+        data_column.focus(TableName::Artist);
 
         let graph_column = GraphColumn::new(pool.clone()).await?;
 
@@ -101,7 +105,7 @@ impl<'a> App<'a> {
                     if matches!(self.focused_column, ColumnName::Graph) {
                         self.focused_column = ColumnName::Data;
                         self.graph_column.unfocus();
-                        self.data_column.focus();
+                        self.data_column.focus(self.data_column.focused_app.clone());
                     }
                 }
                 KeyCode::Char('L') => {
