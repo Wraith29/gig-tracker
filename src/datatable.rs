@@ -1,4 +1,4 @@
-use crossterm::event::{Event, KeyCode};
+use crossterm::event::{Event, KeyCode, KeyModifiers};
 use ratatui::{
     layout::{Constraint, Layout, Rect},
     style::{Style, Stylize},
@@ -110,26 +110,26 @@ impl<'d, T: Into<Row<'d>> + DataSet + Clone + Ord> DataTable<'d, T> {
 
     pub fn handle_event(&mut self, event: Event) {
         if let Event::Key(key) = event {
-            match key.code {
-                KeyCode::Backspace => {
+            match (key.modifiers, key.code) {
+                (KeyModifiers::NONE, KeyCode::Backspace) => {
                     self.search_text.pop();
                     self.update_filter();
                 }
-                KeyCode::Esc => {
+                (KeyModifiers::NONE, KeyCode::Esc) => {
                     self.searching = false;
                     self.search_text = String::new();
                     self.update_filter();
                 }
 
-                KeyCode::Enter => {
+                (KeyModifiers::NONE, KeyCode::Enter) => {
                     self.searching = false;
                 }
 
-                KeyCode::Char('/') => {
+                (KeyModifiers::NONE, KeyCode::Char('/')) => {
                     self.searching = true;
                 }
 
-                KeyCode::Char('k') => {
+                (KeyModifiers::NONE, KeyCode::Char('k')) => {
                     if self.searching {
                         self.search_text.push('k');
                         self.update_filter();
@@ -139,7 +139,7 @@ impl<'d, T: Into<Row<'d>> + DataSet + Clone + Ord> DataTable<'d, T> {
                     self.state.select_previous();
                 }
 
-                KeyCode::Char('j') => {
+                (KeyModifiers::NONE, KeyCode::Char('j')) => {
                     if self.searching {
                         self.search_text.push('j');
                         self.update_filter();
@@ -149,7 +149,7 @@ impl<'d, T: Into<Row<'d>> + DataSet + Clone + Ord> DataTable<'d, T> {
                     self.state.select_next();
                 }
 
-                KeyCode::Char(char) => {
+                (_, KeyCode::Char(char)) => {
                     if self.searching {
                         self.search_text.push(char);
                         self.update_filter();

@@ -88,27 +88,25 @@ impl<'a> App<'a> {
         let event = event::read()?;
 
         if let Event::Key(key) = event {
-            match key.code {
-                KeyCode::Char('+') => {
+            match (key.modifiers, key.code) {
+                (KeyModifiers::NONE, KeyCode::Char('+')) => {
                     self.render_form = true;
                 }
-                KeyCode::Esc => {
+                (KeyModifiers::NONE, KeyCode::Esc) => {
                     self.render_form = false;
                     self.form.reset_and_reload().await?;
                 }
-                KeyCode::Char('c') => {
-                    if key.modifiers == KeyModifiers::CONTROL {
-                        return Ok(true);
-                    }
+                (KeyModifiers::CONTROL, KeyCode::Char('c')) => {
+                    return Ok(true);
                 }
-                KeyCode::Char('H') => {
+                (KeyModifiers::CONTROL, KeyCode::Char('h')) => {
                     if matches!(self.focused_column, ColumnName::Graph) {
                         self.focused_column = ColumnName::Data;
                         self.graph_column.unfocus();
                         self.data_column.focus(self.data_column.focused_app.clone());
                     }
                 }
-                KeyCode::Char('L') => {
+                (KeyModifiers::CONTROL, KeyCode::Char('l')) => {
                     if matches!(self.focused_column, ColumnName::Data) {
                         self.focused_column = ColumnName::Graph;
                         self.data_column.unfocus();
